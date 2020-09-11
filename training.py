@@ -1,3 +1,6 @@
+# huge thanks to @Sentdex for the inspiration:
+# https://github.com/Sentdex/BCI
+
 import tensorflow as tf
 from tensorflow.keras import regularizers
 from tensorflow.keras.models import Sequential
