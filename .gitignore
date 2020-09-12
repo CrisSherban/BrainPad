@@ -1,1 +1,4 @@
 /venv/
+/training_data/
+/untouched_data/
+/validation_data/
