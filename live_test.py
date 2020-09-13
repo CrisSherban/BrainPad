@@ -10,7 +10,7 @@ import threading
 # LSL StreamInlet is wanted, so the threads can be timed without interfering with the StreamInlet
 # TODO : find out if timing the threads is actually necessary
 
-class SharedVariables:
+class Shared:
     def __init__(self):
         self.sample = []
         self.key = None
@@ -103,7 +103,7 @@ def compute_signals():
 
 if __name__ == '__main__':
     gui = GraphicalInterface()
-    shared_vars = SharedVariables()
+    shared_vars = Shared()
     mutex = threading.Lock()
 
     acquisition = threading.Thread(target=acquire_signals)
