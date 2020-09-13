@@ -43,4 +43,4 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 if __name__ == "__main__":
     untouched_X, untouched_y = load_data(starting_dir="untouched_data")
-    evaluate_model(untouched_X, untouched_y, 'models/best.model')
+    evaluate_model(untouched_X, untouched_y, 'models/99.22-4epoch-1600016453-loss-0.01.model')

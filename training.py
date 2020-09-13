@@ -48,28 +48,32 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15)):
 
         data_dir = os.path.join(starting_dir, action)
         for file in os.listdir(data_dir):
-            # each item is a ndarray of shape (8, 90) that represents ~= 1sec of acquisition
+            # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
             data[action].append(np.load(os.path.join(data_dir, file)))
 
         np.random.shuffle(data[action])
 
         # creating subdirectories for each action
+        count = 0
+
         tmp_dir = os.path.join("training_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
         for sample in range(int(len(data[action]) * training_per / 100)):
             np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
+            count += 1
 
         tmp_dir = os.path.join("validation_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        for sample in range(int(len(data[action]) * validation_per / 100)):
+        for sample in range(count, count + int(len(data[action]) * validation_per / 100)):
             np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
+            count += 1
 
         tmp_dir = os.path.join("untouched_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        for sample in range(int(len(data[action]) * untouched_per / 100)):
+        for sample in range(count, count + int(len(data[action]) * untouched_per / 100)):
             np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
 
 
