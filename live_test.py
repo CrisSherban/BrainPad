@@ -6,8 +6,8 @@ import keras
 import threading
 
 
-# The usage of 2 threads is required if continuous is wanted
-# for the LSL StreamInlet, while the separate threads have to be timed
+# The usage of 2 threads is required if continuous data flow from the
+# LSL StreamInlet is wanted, so the threads can be timed without interfering with the StreamInlet
 # TODO : find out if timing the threads is actually necessary
 
 class SharedVariables:
