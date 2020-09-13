@@ -20,34 +20,6 @@ print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('
 ACTIONS = ["left", "right", "none"]
 
 
-def normalize(data, individual_samples=True):
-    if individual_samples:
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        for sample in range(len(data)):
-            data[sample] = scaler.fit_transform(data[sample])
-
-    else:
-        # for some reason normalizing this dataset gives far worse accuracies
-        samples = len(data)
-        channels = len(data[0])
-        frequency = len(data[0, 0])
-
-        data = np.reshape(data, (samples * channels, frequency))
-
-        plt.plot(np.arange(len(data[0])), data[0])
-        plt.show()
-
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        data = scaler.fit_transform(data)
-
-        plt.plot(np.arange(len(data[0])), data[0])
-        plt.show()
-
-        data = np.reshape(data, (samples, channels, frequency))
-
-    return data
-
-
 def split_data(starting_dir="data", splitting_percentage=(65, 20, 15)):
     """
         This function splits the dataset in three folders, training, validation, untouched
@@ -154,6 +126,38 @@ def load_data(starting_dir="training_data"):
         y.append(label)
 
     return X, y
+
+
+def normalize(data, individual_samples=True):
+    # normalizing this dataset does not change the results because
+    # all values are on the same scale: [0, 10]
+
+    if individual_samples:
+        # normalizing with respect to each sample
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        for sample in range(len(data)):
+            data[sample] = scaler.fit_transform(data[sample])
+
+    else:
+        # normalizing with respect to each feature on the whole dataset
+        samples = len(data)
+        channels = len(data[0])
+        frequency = len(data[0, 0])
+
+        data = np.reshape(data, (samples * channels, frequency))
+
+        plt.plot(np.arange(len(data[0])), data[0])
+        plt.show()
+
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        data = scaler.fit_transform(data)
+
+        plt.plot(np.arange(len(data[0])), data[0])
+        plt.show()
+
+        data = np.reshape(data, (samples, channels, frequency))
+
+    return data
 
 
 def main():
