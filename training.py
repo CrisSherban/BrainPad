@@ -157,7 +157,7 @@ def load_data(starting_dir="training_data"):
 
 
 def main():
-    # split_data()
+    split_data()
 
     print("loading training_data")
     train_X, train_y = load_data(starting_dir="training_data")
