@@ -1,6 +1,6 @@
 # BrainPad
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
-<img src="helmet.jpg">
+<img src="pictures/helmet.jpg">
 
 ## Usage
 *   #### acquire_fft.py
@@ -24,4 +24,4 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     
 
 ## The Neural Network so far:
-<img src="crisnet.png">
+<img src="pictures/crisnet.png">

@@ -1,6 +1,6 @@
-### Run the OpenBCI GUI
-### Set Networking mode to LSL, FFT data type, and # Chan to 250
-### Thanks to @Sentdex - Nov 2019
+# huge thanks to @Sentdex for the inspiration:
+# https://github.com/Sentdex/BCI
+
 
 from pylsl import StreamInlet, resolve_stream
 import numpy as np
@@ -37,9 +37,8 @@ for k in range(NUM_ACTIONS):
 
     print(f"saving {ACTION} data...")
     np.save(os.path.join(actiondir, f"{int(time.time())}.npy"), np.array(data))
-    
-    input("Press enter to acquire a new action")
-    print("THINK ", ACTION , " !")
-    
-print(NUM_ACTIONS, " actions done")
 
+    input("Press enter to acquire a new action")
+    print("THINK ", ACTION, " !")
+
+print(NUM_ACTIONS, " actions done")

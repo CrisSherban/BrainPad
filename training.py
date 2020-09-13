@@ -106,7 +106,7 @@ def load_data(starting_dir="training_data"):
         This function loads the training_data from a directory where the classes
         have been split into different folders where each file is a sample
 
-    :param starting_dir: the path of the training_data in the current working directory
+    :param starting_dir: the path of the data you want to load, in the current working directory
     :return: X, y: both python lists
     """
 
@@ -123,29 +123,35 @@ def load_data(starting_dir="training_data"):
     lengths = [len(data[action]) for action in ACTIONS]
     print(lengths)
 
-    # this is required if the classes are unbalanced
+    # this is required if one class has more samples than the others
     for action in ACTIONS:
-        np.random.shuffle(data[action])
         data[action] = data[action][:min(lengths)]
 
     lengths = [len(data[action]) for action in ACTIONS]
     print(lengths)
 
-    # creating X, y
-    X = []
-    y = []
+    # this is needed to shuffle the data between classes, so the model
+    # won't train firs on one single class and then pass to the next one
+    # but it trains to all classes "simultaneously"
+    combined_data = []
 
     for action in ACTIONS:
         for sample in data[action]:
             if action == "left":
-                X.append(sample)
-                y.append([1, 0, 0])
+                combined_data.append([sample, [1, 0, 0]])
             elif action == "right":
-                X.append(sample)
-                y.append([0, 0, 1])
+                combined_data.append([sample, [0, 0, 1]])
             elif action == "none":
-                X.append(sample)
-                y.append([0, 1, 0])
+                combined_data.append([sample, [0, 1, 0]])
+
+    np.random.shuffle(combined_data)
+
+    # create X, y:
+    X = []
+    y = []
+    for sample, label in combined_data:
+        X.append(sample)
+        y.append(label)
 
     return X, y
 
@@ -238,7 +244,7 @@ def main():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    tf.keras.utils.plot_model(model, "crisnet.png", show_shapes=True)
+    tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
     batch_size = 10
     epochs = 5
