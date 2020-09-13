@@ -21,7 +21,8 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     *   Set this script in the OpenBCI GUI Working Directory
     *   Think at some action from [Left, Right, None] and check on screen what happens
     
-    
+## Confusion Matrix so far:
+<img src="pictures/confusion_matrix.png">
 
 ## The Neural Network so far:
 <img src="pictures/crisnet.png">
