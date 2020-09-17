@@ -1,5 +1,5 @@
-from tensorflow import keras
-from training import load_data
+import keras
+from training import load_data, standardize, check_duplicate
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import numpy as np
@@ -11,7 +11,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     untouched_y = np.array(untouched_y)
 
     model = keras.models.load_model(model_path)
-    model.evaluate(untouched_X, untouched_y)
+    score = model.evaluate(untouched_X, untouched_y)
 
     predictions = model.predict(untouched_X)
 
@@ -19,6 +19,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     y_true = [np.where(i == 1)[0][0] for i in untouched_y]  # one hot to int
     for i in range(len(predictions)):
         y_pred.append(np.argmax(predictions[i]))
+        print(round(predictions[i][np.argmax(predictions[i])], 2))  # checks confidence
 
     conf_mat = confusion_matrix(y_true, y_pred, normalize="true")
     print(conf_mat)
@@ -40,7 +41,12 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     plt.ylabel("Action Predicted")
     plt.savefig("pictures/confusion_matrix.png")
 
+    return score
+
 
 if __name__ == "__main__":
     untouched_X, untouched_y = load_data(starting_dir="untouched_data")
-    evaluate_model(untouched_X, untouched_y, 'models/99.22-4epoch-1600016453-loss-0.01.model')
+    untouched_X = standardize(untouched_X)
+
+    score = evaluate_model(untouched_X, untouched_y, 'models/98.75-4epoch-1600366314-loss-0.01.model')
+    print("Accuracy on Untouched Data: ", score[1])

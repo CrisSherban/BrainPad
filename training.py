@@ -1,21 +1,22 @@
 # huge thanks to @Sentdex for the inspiration:
 # https://github.com/Sentdex/BCI
+# also check out his version, he uses Conv1D nets
 
 import tensorflow as tf
-from tensorflow.keras import regularizers
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten
-from tensorflow.keras.layers import Conv2D, MaxPool2D, BatchNormalization, AveragePooling2D
+from keras import regularizers
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, MaxPool2D
 from matplotlib import pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+from colors import red, green
 import numpy as np
 import time
 import os
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-print(tf.__version__)
-print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
+# print(tf.__version__)
+# print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
 ACTIONS = ["left", "right", "none"]
 
@@ -41,83 +42,86 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15)):
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
 
-    data = {}
     for action in ACTIONS:
-        if action not in data:
-            data[action] = []
+
+        action_data = []
+        # this will contain all the samples relative to the action
+        # the usage of a list is necessary if python version <=3.6,
+        # before that dictionaries were unordered
 
         data_dir = os.path.join(starting_dir, action)
         for file in os.listdir(data_dir):
             # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
-            data[action].append(np.load(os.path.join(data_dir, file)))
+            action_data.append(np.load(os.path.join(data_dir, file)))
 
-        np.random.shuffle(data[action])
+        np.random.shuffle(action_data)
 
         # creating subdirectories for each action
-        count = 0
+
+        num_training_samples = int(len(action_data) * training_per / 100)
+        num_validation_samples = int(len(action_data) * validation_per / 100)
+        num_untouched_samples = int(len(action_data) * untouched_per / 100)
 
         tmp_dir = os.path.join("training_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        for sample in range(int(len(data[action]) * training_per / 100)):
-            np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
-            count += 1
+        for sample in range(num_training_samples):
+            np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
         tmp_dir = os.path.join("validation_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        for sample in range(count, count + int(len(data[action]) * validation_per / 100)):
-            np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
-            count += 1
+        for sample in range(num_training_samples, num_training_samples + num_validation_samples):
+            np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
         tmp_dir = os.path.join("untouched_data", action)
         if not os.path.exists(tmp_dir):
             os.mkdir(tmp_dir)
-        for sample in range(count, count + int(len(data[action]) * untouched_per / 100)):
-            np.save(file=os.path.join(tmp_dir, str(sample)), arr=data[action][sample])
+        for sample in range(num_training_samples + num_validation_samples,
+                            num_training_samples + num_validation_samples + num_untouched_samples):
+            np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
 
-def load_data(starting_dir="training_data"):
+def load_data(starting_dir):
     """
-        This function loads the training_data from a directory where the classes
+        This function loads the data from a directory where the classes
         have been split into different folders where each file is a sample
 
-    :param starting_dir: the path of the data you want to load, in the current working directory
+    :param starting_dir: the path of the data you want to load
     :return: X, y: both python lists
     """
 
-    data = {}
-    for action in ACTIONS:
-        if action not in data:
-            data[action] = []
+    data = [[] for i in range(len(ACTIONS))]
+    for i, action in enumerate(ACTIONS):
 
         data_dir = os.path.join(starting_dir, action)
         for file in os.listdir(data_dir):
             # each item is a ndarray of shape (8, 90) that represents ~= 1sec of acquisition
-            data[action].append(np.load(os.path.join(data_dir, file)))
+            data[i].append(np.load(os.path.join(data_dir, file)))
 
-    lengths = [len(data[action]) for action in ACTIONS]
+    lengths = [len(data[i]) for i in range(len(ACTIONS))]
     print(lengths)
 
     # this is required if one class has more samples than the others
-    for action in ACTIONS:
-        data[action] = data[action][:min(lengths)]
+    for i in range(len(ACTIONS)):
+        data[i] = data[i][:min(lengths)]
 
-    lengths = [len(data[action]) for action in ACTIONS]
+    lengths = [len(data[i]) for i in range(len(ACTIONS))]
     print(lengths)
 
     # this is needed to shuffle the data between classes, so the model
-    # won't train firs on one single class and then pass to the next one
-    # but it trains to all classes "simultaneously"
+    # won't train first on one single class and then pass to the next one
+    # but it trains all classes "simultaneously"
     combined_data = []
 
-    for action in ACTIONS:
-        for sample in data[action]:
-            if action == "left":
+    # we are using one hot encodings
+    for i in range(len(ACTIONS)):
+        for sample in data[i]:
+            if i == 0:  # "left":
                 combined_data.append([sample, [1, 0, 0]])
-            elif action == "right":
+            elif i == 1:  # "right":
                 combined_data.append([sample, [0, 0, 1]])
-            elif action == "none":
+            elif i == 2:  # "none":
                 combined_data.append([sample, [0, 1, 0]])
 
     np.random.shuffle(combined_data)
@@ -132,36 +136,45 @@ def load_data(starting_dir="training_data"):
     return X, y
 
 
-def normalize(data, individual_samples=True):
-    # normalizing this dataset does not change the results because
-    # all values are on the same scale: [0, 10]
-
-    if individual_samples:
-        # normalizing with respect to each sample
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        for sample in range(len(data)):
-            data[sample] = scaler.fit_transform(data[sample])
-
-    else:
-        # normalizing with respect to each feature on the whole dataset
-        samples = len(data)
-        channels = len(data[0])
-        frequency = len(data[0, 0])
-
-        data = np.reshape(data, (samples * channels, frequency))
-
-        plt.plot(np.arange(len(data[0])), data[0])
-        plt.show()
-
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        data = scaler.fit_transform(data)
-
-        plt.plot(np.arange(len(data[0])), data[0])
-        plt.show()
-
-        data = np.reshape(data, (samples, channels, frequency))
-
+def standardize(data):
+    for k in range(len(data)):
+        # calculate statistics for each sample
+        mean = data[k].mean()
+        std = data[k].std()
+        data[k] -= mean
+        data[k] /= std
     return data
+
+
+def visualize_data(train_X, validation_X, untouched_X):
+    # taking a look at the data so far
+    fig, ax = plt.subplots(3)
+    fig.suptitle('Train, Validation, Untouched')
+    for j in range(4):
+        for i in range(8):
+            ax[0].plot(np.arange(len(train_X[j][i])), train_X[j][i].reshape(90))
+        for i in range(8):
+            ax[1].plot(np.arange(len(validation_X[j][i])), validation_X[j][i].reshape(90))
+        for i in range(8):
+            ax[2].plot(np.arange(len(untouched_X[j][i])), untouched_X[j][i].reshape(90))
+        plt.savefig(str(j) + ".png")
+        for i in range(3):
+            ax[i].clear()
+
+
+def check_duplicate(train_X, test_X):
+    print("Checking duplicated samples split-wise...")
+
+    tmp_train = np.array(train_X)
+    tmp_test = np.array(test_X)
+
+    for i in range(len(tmp_train)):
+        if i % 50 == 0:
+            print("\rComputing: " + str(int(i * 100 / len(tmp_train))) + "%", end='')
+        for j in range(len(tmp_test)):
+            if np.array_equiv(tmp_train[i, 0], tmp_test[j, 0]):
+                return True
+    return False
 
 
 def main():
@@ -173,60 +186,34 @@ def main():
     print("loading validation_data")
     validation_X, validation_y = load_data(starting_dir="validation_data")
 
-    print("loading untouched_data")
-    untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    # print("loading untouched_data")
+    # untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
     print(np.array(train_X).shape)
 
-    # newaxis is used to mach the input of a Conv2D
-    # we are considering are training_data as a grayscale image
+    '''
+    if check_duplicate(train_X, validation_X):
+        print(red("\nYou have duplicated data in the splits !!!"))
+        print(red("Check the splitting procedure"))
+        return 1
+    else:
+        print(green("\nYou're good to go, no duplication in the splits"))
+    '''
 
-    train_X = np.array(train_X)[:, :, :, np.newaxis]
-    validation_X = np.array(validation_X)[:, :, :, np.newaxis]
-    untouched_X = np.array(untouched_X)[:, :, :, np.newaxis]
+    # newaxis is used to mach the input of a Conv2D
+    # we are considering the samples as a grayscale image
+
+    train_X = standardize(np.array(train_X))[:, :, :, np.newaxis]
+    validation_X = standardize(np.array(validation_X))[:, :, :, np.newaxis]
+    # untouched_X = np.array(untouched_X)[:, :, :, np.newaxis]
 
     train_y = np.array(train_y)
     validation_y = np.array(validation_y)
-    untouched_y = np.array(untouched_y)
+    # untouched_y = np.array(untouched_y)
 
     print(np.array(train_X).shape)
 
-    # taking a look at the data so far
-    fig, ax = plt.subplots(3)
-    fig.suptitle('Train, Validation, Untouched')
-    for j in range(4):
-        for i in range(8):
-            ax[0].plot(np.arange(len(train_X[j][i])), train_X[j][i].reshape((90)))
-        for i in range(8):
-            ax[1].plot(np.arange(len(validation_X[j][i])), validation_X[j][i].reshape((90)))
-        for i in range(8):
-            ax[2].plot(np.arange(len(untouched_X[j][i])), untouched_X[j][i].reshape((90)))
-        plt.savefig(str(j) + ".png")
-        for i in range(3):
-            ax[i].clear()
-
-    '''
-    ####### an toy model #######
-    inputs = tf.keras.Input(shape=(8, 90, 1), name="fft")
-    x = Conv2D(filters=32, kernel_size=(3, 3), activation='tanh', padding="same")(inputs)
-    block_1_output = MaxPool2D(pool_size=(2, 2), strides=2)(x)
-
-    x = Conv2D(filters=64, kernel_size=(5, 5), activation='tanh', padding="same",
-               kernel_regularizer=regularizers.l2(1e-6))(block_1_output)
-    x = Conv2D(filters=32, kernel_size=(3, 3), activation='tanh', padding="same",
-               kernel_regularizer=regularizers.l2(1e-6))(x)
-    block_2_output = tf.keras.layers.add([x, block_1_output])
-
-    x = MaxPool2D(pool_size=(2, 2), strides=2)(block_2_output)
-    x = Dense(32, activation="elu")(x)
-    x = Flatten()(x)
-    outputs = Dense(3, activation="softmax")(x)
-
-    model = tf.keras.Model(inputs, outputs, name="crisnet")
-    '''
-
     #########################################################
-    #################### a simpler model ####################
     model = Sequential([
         Conv2D(filters=32, kernel_size=(3, 3), activation='tanh',
                padding="same", input_shape=(8, 90, 1)),
@@ -252,17 +239,21 @@ def main():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
+    # tf.keras.utils.plot_model(model, "crisnet.png", show_shapes=True)
 
     batch_size = 10
     epochs = 5
+
+    # saving the model one epoch at a time
     for epoch in range(epochs):
         model.fit(train_X, train_y, epochs=1, batch_size=batch_size, validation_data=(validation_X, validation_y))
         score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
         MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-        if round(score[1] * 100, 2) > 80:
+        if round(score[1] * 100, 2) > 70:
             model.save(MODEL_NAME)
         print("saved: ", MODEL_NAME)
+
+    return 0
 
 
 if __name__ == "__main__":
