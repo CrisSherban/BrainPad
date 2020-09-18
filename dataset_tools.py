@@ -3,10 +3,10 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["left", "right", "none", "blink"]
+ACTIONS = ["left", "right", "none"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=True):
+def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=True, division_factor=5):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -14,11 +14,16 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
     :param starting_dir: string, the directory of the dataset
     :param splitting_percentage:  tuple, (training_percentage, validation_percentage, untouched_percentage)
     :param shuffle: bool, decides if the data will be shuffled
+    :param division_factor: int, the data used is made of FFTs which are taken from multiple sittings
+                                so one sample is very similar to an adjacent one, so not all the samples
+                                should be considered because some very similar samples could fall both in
+                                validation and training, thus the division_factor divides the data
+
     """
     training_per, validation_per, untouched_per = splitting_percentage
 
-    if not os.path.exists("training_data") and not os.path.exists("validation_data") and not os.path.exists(
-            "untouched_data"):
+    if not os.path.exists("training_data") and not os.path.exists("validation_data") \
+            and not os.path.exists("untouched_data"):
 
         # creating directories
 
@@ -29,6 +34,7 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
         for action in ACTIONS:
 
             action_data = []
+            all_action_data = []
             # this will contain all the samples relative to the action
             # the usage of a list is necessary if python version <=3.6,
             # before that dictionaries were unordered
@@ -38,7 +44,11 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
             # since each sample file is saved as "timestamp".npy
             for file in sorted(os.listdir(data_dir)):
                 # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
-                action_data.append(np.load(os.path.join(data_dir, file)))
+                all_action_data.append(np.load(os.path.join(data_dir, file)))
+
+            for i in range(len(all_action_data)):
+                if i % division_factor == 0:
+                    action_data.append(all_action_data[i])
 
             if shuffle:
                 np.random.shuffle(action_data)
@@ -75,6 +85,7 @@ def load_data(starting_dir, shuffle=True, balance=False):
 
     :param starting_dir: the path of the data you want to load
     :param shuffle: bool, decides if the data will be shuffled
+    :param balance: bool, decides if samples should be equal in cardinality between classes
     :return: X, y: both python lists
     """
 
@@ -106,13 +117,11 @@ def load_data(starting_dir, shuffle=True, balance=False):
     for i in range(len(ACTIONS)):
         for sample in data[i]:
             if i == 0:  # left
-                combined_data.append([sample, [1, 0, 0, 0]])
+                combined_data.append([sample, [1, 0, 0]])
             elif i == 1:  # right
-                combined_data.append([sample, [0, 0, 1, 0]])
+                combined_data.append([sample, [0, 0, 1]])
             elif i == 2:  # none
-                combined_data.append([sample, [0, 1, 0, 0]])
-            elif i == 3:  # blink
-                combined_data.append(([sample, [0, 0, 0, 1]]))
+                combined_data.append([sample, [0, 1, 0]])
 
     if shuffle:
         np.random.shuffle(combined_data)

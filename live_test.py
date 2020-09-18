@@ -62,16 +62,18 @@ def compute_signals():
         with mutex:
             print("computing_phase")
 
+            # channel-wise standardization
             sample = np.array(shared_vars.sample)
-            sample -= sample.mean()
-            sample /= sample.std()
+            for i in range(len(sample)):
+                sample[i] -= sample[i].mean()
+                sample[i] /= sample[i].std()
 
             nn_input = sample.reshape((1, 8, 90, 1))
             nn_out = model.predict(nn_input)
 
             predicted_action = np.argmax(nn_out)
 
-            if nn_out[0][predicted_action] > 0.85:
+            if nn_out[0][predicted_action] > 0.7:
                 if predicted_action == 0:
                     # print("PREDICTION: LEFT")
                     gui.square['x1'] -= gui.MOVE_SPEED
@@ -83,6 +85,8 @@ def compute_signals():
                     gui.square['x2'] += gui.MOVE_SPEED
                 # else:
                 # print("PREDICTION: NONE")
+                elif predicted_action == 3:
+                    print("YOU BLINKED!")
 
             env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
 
@@ -101,69 +105,9 @@ def compute_signals():
             time.sleep(0.1)
 
 
-def enter_acquisition():
-    MODEL_NAME = "models/74.22-4epoch-1600363004-loss-0.13.model"  # model path here.
-    model = keras.models.load_model(MODEL_NAME)
-
-    print("looking for an EEG stream...")
-    streams = resolve_stream('type', 'EEG')
-    inlet = StreamInlet(streams[0])
-    print("inlet created")
-
-    MAX_FREQ = 90
-    gui = GraphicalInterface()
-
-    while True:
-        data = []
-
-        input("Press enter to acquire a new action")
-
-        for j in range(1):
-            for i in range(8):  # each of the 8 channels here
-                sample, timestamp = inlet.pull_sample()
-                data.append(sample[:MAX_FREQ])
-
-        sample = np.array(data)
-        sample -= sample.mean()
-        sample /= sample.std()
-
-        nn_input = np.array(data).reshape((1, 8, 90, 1))
-
-        nn_out = model.predict(nn_input)
-
-        predicted_action = np.argmax(nn_out)
-
-        if nn_out[0][predicted_action] > 0.6:
-
-            if predicted_action == 0:
-                print("PREDICTION: LEFT ", round(nn_out[0][predicted_action], 2))
-                gui.square['x1'] -= gui.MOVE_SPEED
-                gui.square['x2'] -= gui.MOVE_SPEED
-
-            elif predicted_action == 2:
-                print("PREDICTION: RIGHT ", round(nn_out[0][predicted_action], 2))
-                gui.square['x1'] += gui.MOVE_SPEED
-                gui.square['x2'] += gui.MOVE_SPEED
-            else:
-                print("PREDICTION: NONE ", round(nn_out[0][predicted_action], 2))
-
-        env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
-
-        env[:, gui.HEIGHT // 2 - 5:gui.HEIGHT // 2 + 5, :] = gui.horizontal_line
-        env[gui.WIDTH // 2 - 5:gui.WIDTH // 2 + 5, :, :] = gui.vertical_line
-        env[gui.square['y1']:gui.square['y2'], gui.square['x1']:gui.square['x2']] = gui.box
-
-        cv2.imshow('', env)
-
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            cv2.destroyAllWindows()
-            break
-
-
 #############################################################
 
-# TODO: acquire more than one second!
+# TODO: acquire more than one second
 # TODO: moving average implementation
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     ax = fig.add_subplot(111)
     ax.matshow(conf_mat, cmap=plt.get_cmap("RdYlGn"))
 
-    ACTIONS = ["left", "none", "right", "blink"]
+    ACTIONS = ["left", "none", "right"]
     ax.set_xticklabels([""] + ACTIONS)
     ax.set_yticklabels([""] + ACTIONS)
 
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     for i in range(len(untouched_X)):
         untouched_X[i] = [(untouched_X[i][j] * gaussian_filter()) for j in range(len(untouched_X[0]))]
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/97.99-9epoch-1600450472-loss-0.01.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/63.13-6epoch-1600471670-loss-0.17.model')
     print("Accuracy on Untouched Data: ", score[1])

@@ -2,12 +2,8 @@
 # https://github.com/Sentdex/BCI
 # also check out his version, he uses Conv1D nets
 
-import tensorflow as tf
-from tensorflow.keras import regularizers
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten
-from tensorflow.keras.layers import Conv2D, MaxPool2D
 from dataset_tools import split_data, standardize, gaussian_filter, load_data
+from neural_nets import res_net, cris_net
 import numpy as np
 import time
 
@@ -18,13 +14,13 @@ import time
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
 
 def main():
-    split_data(shuffle=True)
+    split_data(shuffle=True, division_factor=6)
 
     print("loading training_data")
-    train_X, train_y = load_data(starting_dir="training_data", shuffle=False)
+    train_X, train_y = load_data(starting_dir="training_data", shuffle=True)
 
     print("loading validation_data")
-    validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=False)
+    validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True)
 
     # print("loading untouched_data")
     # untouched_X, untouched_y = load_data(starting_dir="untouched_data")
@@ -50,26 +46,7 @@ def main():
 
     print(np.array(train_X).shape)
 
-    #########################################################
-    model = Sequential([
-        Conv2D(filters=32, kernel_size=(3, 3), activation='tanh',
-               padding="same", input_shape=(8, 90, 1)),
-
-        MaxPool2D(pool_size=(2, 2), strides=3),
-
-        Conv2D(filters=64, kernel_size=(5, 5), activation='tanh',
-               kernel_regularizer=regularizers.l2(1e-6), padding="same"),
-
-        MaxPool2D(pool_size=(2, 2), strides=2),
-
-        Dense(64, activation="elu", kernel_regularizer=regularizers.l2(1e-6)),
-
-        Flatten(),
-
-        Dense(4, activation="softmax")
-    ])
-
-    ##########################################################
+    model = cris_net()
 
     model.summary()
 
@@ -77,17 +54,17 @@ def main():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
+    #tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
-    batch_size = 5
-    epochs = 5
+    batch_size = 3
+    epochs = 8
 
     # saving the model one epoch at a time
     for epoch in range(epochs):
         model.fit(train_X, train_y, epochs=1, batch_size=batch_size, validation_data=(validation_X, validation_y))
-        score = model.evaluate(validation_X, validation_y)
+        score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
         MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-        if round(score[1] * 100, 2) > 40:
+        if round(score[1] * 100, 2) > 55:
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
 
