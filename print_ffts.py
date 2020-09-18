@@ -4,9 +4,6 @@ import os
 
 # this script allows to plot the ffts as the model sees them
 
-x = (np.array_equal(np.array([1, 2, 3]), np.array([1, 2, 3])))
-if x :
-    print("are equal")
 
 data = []
 data_dir = "data/left"

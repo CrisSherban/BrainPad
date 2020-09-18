@@ -101,33 +101,7 @@ def compute_signals():
             time.sleep(0.1)
 
 
-#############################################################
-
-# TODO: acquire more than one second!
-# TODO: moving average implementation
-
-if __name__ == '__main__':
-    '''
-    # resolve an EEG stream on the lab network
-    print("looking for an EEG stream...")
-    streams = resolve_stream('type', 'EEG')
-    # create a new inlet to read from the stream
-    inlet = StreamInlet(streams[0])
-    print("inlet created")
-
-    gui = GraphicalInterface()
-    shared_vars = Shared()
-    mutex = threading.Lock()
-
-    acquisition = threading.Thread(target=acquire_signals)
-    acquisition.start()
-    computing = threading.Thread(target=compute_signals)
-    computing.start()
-
-    acquisition.join()
-    computing.join()
-    '''
-
+def enter_acquisition():
     MODEL_NAME = "models/74.22-4epoch-1600363004-loss-0.13.model"  # model path here.
     model = keras.models.load_model(MODEL_NAME)
 
@@ -185,3 +159,29 @@ if __name__ == '__main__':
         if key == ord("q"):
             cv2.destroyAllWindows()
             break
+
+
+#############################################################
+
+# TODO: acquire more than one second!
+# TODO: moving average implementation
+
+if __name__ == '__main__':
+    # resolve an EEG stream on the lab network
+    print("looking for an EEG stream...")
+    streams = resolve_stream('type', 'EEG')
+    # create a new inlet to read from the stream
+    inlet = StreamInlet(streams[0])
+    print("inlet created")
+
+    gui = GraphicalInterface()
+    shared_vars = Shared()
+    mutex = threading.Lock()
+
+    acquisition = threading.Thread(target=acquire_signals)
+    acquisition.start()
+    computing = threading.Thread(target=compute_signals)
+    computing.start()
+
+    acquisition.join()
+    computing.join()

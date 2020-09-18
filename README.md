@@ -24,6 +24,9 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
 ## Confusion Matrix so far:
 <img src="pictures/confusion_matrix.png">
 
+## How the model sees data:
+<img src="pictures/how_model_sees.png">
+
 ## A look at our samples:
 <img src="pictures/a_not_normalized_sample.png">
 
