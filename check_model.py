@@ -50,5 +50,5 @@ if __name__ == "__main__":
     for i in range(len(untouched_X)):
         untouched_X[i] = [(untouched_X[i][j] * gaussian_filter()) for j in range(len(untouched_X[0]))]
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/61.25-4epoch-1600473355-loss-0.17.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/57.78-5epoch-1600506798-loss-0.2.model')
     print("Accuracy on Untouched Data: ", score[1])

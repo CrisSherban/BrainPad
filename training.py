@@ -14,7 +14,7 @@ import time
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
 
 def main():
-    split_data(shuffle=True, division_factor=5)
+    split_data(shuffle=True, division_factor=8, coupling=True)
 
     print("loading training_data")
     train_X, train_y = load_data(starting_dir="training_data", shuffle=False)

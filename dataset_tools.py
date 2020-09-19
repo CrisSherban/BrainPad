@@ -6,7 +6,7 @@ import os
 ACTIONS = ["left", "right", "none"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=True, coupling=True, division_factor=5):
+def split_data(starting_dir="data", splitting_percentage=(75, 24, 1), shuffle=True, coupling=True, division_factor=5):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -17,7 +17,8 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
     :param division_factor: int, the data used is made of FFTs which are taken from multiple sittings
                                 so one sample is very similar to an adjacent one, so not all the samples
                                 should be considered because some very similar samples could fall both in
-                                validation and training, thus the division_factor divides the data
+                                validation and training, thus the division_factor divides the data.
+                                if division_factor == 0 the function will maintain all the data
     :param coupling: bool, decides if samples are shuffled singularly or by couples
 
     """
@@ -45,13 +46,22 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
                 # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
                 all_action_data.append(np.load(os.path.join(data_dir, file)))
 
+            # TODO: make this coupling part readable
             if coupling:
                 # coupling near time acquired samples to reduce the probability of having
                 # similar samples in both train and validation sets
                 coupled_actions = []
                 first = True
                 for i in range(len(all_action_data)):
-                    if i % division_factor == 0:
+                    if division_factor != 0:
+                        if i % division_factor == 0:
+                            if first:
+                                tmp_act = all_action_data[i]
+                                first = False
+                            else:
+                                coupled_actions.append([tmp_act, all_action_data[i]])
+                                first = True
+                    else:
                         if first:
                             tmp_act = all_action_data[i]
                             first = False
@@ -68,10 +78,15 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
                         action_data.append(coupled_actions[i][j])
 
             else:
-                action_data = all_action_data
+                for i in range(len(all_action_data)):
+                    if division_factor != 0:
+                        if i % division_factor == 0:
+                            action_data.append(all_action_data[i])
+                    else:
+                        action_data = all_action_data
+
                 if shuffle:
                     np.random.shuffle(action_data)
-
 
             num_training_samples = int(len(action_data) * training_per / 100)
             num_validation_samples = int(len(action_data) * validation_per / 100)
