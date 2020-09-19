@@ -14,13 +14,13 @@ import time
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
 
 def main():
-    split_data(shuffle=True, division_factor=6)
+    split_data(shuffle=True, division_factor=5)
 
     print("loading training_data")
-    train_X, train_y = load_data(starting_dir="training_data", shuffle=True)
+    train_X, train_y = load_data(starting_dir="training_data", shuffle=False)
 
     print("loading validation_data")
-    validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True)
+    validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=False)
 
     # print("loading untouched_data")
     # untouched_X, untouched_y = load_data(starting_dir="untouched_data")
@@ -36,8 +36,8 @@ def main():
     # newaxis is used to mach the input of a Conv2D
     # we are considering the samples as a grayscale image
 
-    train_X = standardize(standardize(np.array(train_X)), std_type="feature_wise")[:, :, :, np.newaxis]
-    validation_X = standardize(standardize(np.array(validation_X)), std_type="feature_wise")[:, :, :, np.newaxis]
+    train_X = standardize(np.array(train_X))[:, :, :, np.newaxis]
+    validation_X = standardize(np.array(validation_X))[:, :, :, np.newaxis]
     # untouched_X = np.array(untouched_X)[:, :, :, np.newaxis]
 
     train_y = np.array(train_y)
@@ -54,7 +54,7 @@ def main():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    #tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
+    # tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
     batch_size = 3
     epochs = 8

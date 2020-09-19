@@ -54,7 +54,10 @@ def cris_net():
         MaxPool2D(pool_size=(2, 2), strides=3),
 
         Conv2D(filters=64, kernel_size=(5, 5), activation='tanh',
-               kernel_regularizer=regularizers.l2(1e-5), padding="same"),
+               kernel_regularizer=regularizers.l2(1e-6), padding="same"),
+
+        Conv2D(filters=32, kernel_size=(3, 3), activation='tanh',
+               kernel_regularizer=regularizers.l2(1e-6), padding="same"),
 
         MaxPool2D(pool_size=(2, 2), strides=2),
 

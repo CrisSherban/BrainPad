@@ -7,7 +7,7 @@ import numpy as np
 
 def evaluate_model(untouched_X, untouched_y, model_path):
     print("loading untouched_data")
-    untouched_X = standardize(standardize(np.array(untouched_X)), std_type="feature_wise")[:, :, :, np.newaxis]
+    untouched_X = standardize(np.array(untouched_X))[:, :, :, np.newaxis]
     untouched_y = np.array(untouched_y)
 
     model = keras.models.load_model(model_path)
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     for i in range(len(untouched_X)):
         untouched_X[i] = [(untouched_X[i][j] * gaussian_filter()) for j in range(len(untouched_X[0]))]
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/63.13-6epoch-1600471670-loss-0.17.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/61.25-4epoch-1600473355-loss-0.17.model')
     print("Accuracy on Untouched Data: ", score[1])

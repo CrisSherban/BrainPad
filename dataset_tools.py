@@ -6,7 +6,7 @@ import os
 ACTIONS = ["left", "right", "none"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=True, division_factor=5):
+def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=True, coupling=True, division_factor=5):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -18,6 +18,7 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
                                 so one sample is very similar to an adjacent one, so not all the samples
                                 should be considered because some very similar samples could fall both in
                                 validation and training, thus the division_factor divides the data
+    :param coupling: bool, decides if samples are shuffled singularly or by couples
 
     """
     training_per, validation_per, untouched_per = splitting_percentage
@@ -36,8 +37,6 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
             action_data = []
             all_action_data = []
             # this will contain all the samples relative to the action
-            # the usage of a list is necessary if python version <=3.6,
-            # before that dictionaries were unordered
 
             data_dir = os.path.join(starting_dir, action)
             # sorted will make sure that the data is appended in the order of acquisition
@@ -46,12 +45,33 @@ def split_data(starting_dir="data", splitting_percentage=(65, 20, 15), shuffle=T
                 # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
                 all_action_data.append(np.load(os.path.join(data_dir, file)))
 
-            for i in range(len(all_action_data)):
-                if i % division_factor == 0:
-                    action_data.append(all_action_data[i])
+            if coupling:
+                # coupling near time acquired samples to reduce the probability of having
+                # similar samples in both train and validation sets
+                coupled_actions = []
+                first = True
+                for i in range(len(all_action_data)):
+                    if i % division_factor == 0:
+                        if first:
+                            tmp_act = all_action_data[i]
+                            first = False
+                        else:
+                            coupled_actions.append([tmp_act, all_action_data[i]])
+                            first = True
 
-            if shuffle:
-                np.random.shuffle(action_data)
+                if shuffle:
+                    np.random.shuffle(coupled_actions)
+
+                # reformatting all the samples in a single list
+                for i in range(len(coupled_actions)):
+                    for j in range(len(coupled_actions[i])):
+                        action_data.append(coupled_actions[i][j])
+
+            else:
+                action_data = all_action_data
+                if shuffle:
+                    np.random.shuffle(action_data)
+
 
             num_training_samples = int(len(action_data) * training_per / 100)
             num_validation_samples = int(len(action_data) * validation_per / 100)
@@ -203,7 +223,7 @@ def check_duplicate(train_X, test_X):
     return False
 
 
-def gaussian_filter(x=np.linspace(0, 90, 90), mu=50, sig=0.6):
+def gaussian_filter(x=np.linspace(0, 90, 90), mu=50, sig=0.5):
     # with the default values this will make a good filter for the 50Hz noise from electronic equipment
     # change mu to 60 if you are in the US
     return -(np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))) + 1
