@@ -1,8 +1,8 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten
-from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D
-from tensorflow.keras import regularizers
-from tensorflow.keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D
+from keras import regularizers
+from keras.models import Sequential
 from dataset_tools import ACTIONS
 
 stride = 1
@@ -46,17 +46,18 @@ def res_net():
     return model
 
 
-def cris_net():
+def cris_net(input_shape):
+    # simple networked with added MaxPools
+    # inspiration from:
+    # https://iopscience.iop.org/article/10.1088/1741-2552/ab0ab5/meta
+
     model = Sequential([
         Conv2D(filters=32, kernel_size=(3, 3), activation='tanh',
-               padding="same", input_shape=(8, 90, 1)),
+               padding="same", input_shape=input_shape),
 
         MaxPool2D(pool_size=(2, 2), strides=3),
 
         Conv2D(filters=64, kernel_size=(5, 5), activation='tanh',
-               kernel_regularizer=regularizers.l2(1e-6), padding="same"),
-
-        Conv2D(filters=32, kernel_size=(3, 3), activation='tanh',
                kernel_regularizer=regularizers.l2(1e-6), padding="same"),
 
         MaxPool2D(pool_size=(2, 2), strides=2),

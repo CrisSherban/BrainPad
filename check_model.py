@@ -1,4 +1,4 @@
-import tensorflow.keras as keras
+import keras
 from dataset_tools import load_data, standardize, gaussian_filter, ACTIONS
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
@@ -46,9 +46,10 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 if __name__ == "__main__":
     untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    untouched_X = np.array(untouched_X)[:, :, 8:32]
 
     for i in range(len(untouched_X)):
         untouched_X[i] = [(untouched_X[i][j] * gaussian_filter()) for j in range(len(untouched_X[0]))]
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/57.78-5epoch-1600506798-loss-0.2.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/87.04-9epoch-1600781301-loss-0.51.model')
     print("Accuracy on Untouched Data: ", score[1])

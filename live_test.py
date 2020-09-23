@@ -21,7 +21,7 @@ class Shared:
 
 class GraphicalInterface:
     # huge thanks for the GUI to @Sentdex: https://github.com/Sentdex/BCI
-    def __init__(self, WIDTH=500, HEIGHT=500, SQ_SIZE=40, MOVE_SPEED=2):
+    def __init__(self, WIDTH=500, HEIGHT=500, SQ_SIZE=40, MOVE_SPEED=5):
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
         self.SQ_SIZE = SQ_SIZE
@@ -56,12 +56,20 @@ def acquire_signals():
 
 
 def compute_signals():
-    MODEL_NAME = "models/74.22-4epoch-1600363004-loss-0.13.model"
+    MODEL_NAME = "models/100.0-1epoch-1600593706-loss-0.0.model"
     model = keras.models.load_model(MODEL_NAME)
+    count_down = 20
+    gui = GraphicalInterface()
 
     while True:
         with mutex:
             print("computing_phase")
+
+            if count_down == 0:
+                gui = GraphicalInterface()
+                count_down = 20
+
+            env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
 
             # channel-wise standardization
             sample = np.array(shared_vars.sample)
@@ -76,22 +84,16 @@ def compute_signals():
 
             predicted_action = np.argmax(nn_out)
 
-            if nn_out[0][predicted_action] > 0.7:
+            if nn_out[0][predicted_action] > 0.9:
                 if predicted_action == 0:
-                    # print("PREDICTION: LEFT")
-                    gui.square['x1'] -= gui.MOVE_SPEED
-                    gui.square['x2'] -= gui.MOVE_SPEED
-
-                elif predicted_action == 2:
-                    # print("PREDICTION: RIGHT")
+                    print("YOU BLINKED!")
+                    cv2.putText(env, "BLINKED!", (5, 40), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                                fontScale=1.3, color=(255, 255, 255), thickness=2)
                     gui.square['x1'] += gui.MOVE_SPEED
                     gui.square['x2'] += gui.MOVE_SPEED
-                # else:
-                # print("PREDICTION: NONE")
-                elif predicted_action == 3:
-                    print("YOU BLINKED!")
-
-            env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
+                else:
+                    print("ACTION PREDICTED: NONE")
+                    count_down -= 1
 
             env[:, gui.HEIGHT // 2 - 5:gui.HEIGHT // 2 + 5, :] = gui.horizontal_line
             env[gui.WIDTH // 2 - 5:gui.WIDTH // 2 + 5, :, :] = gui.vertical_line
@@ -105,7 +107,7 @@ def compute_signals():
                 break
 
             # sampling the FFTs
-            time.sleep(0.1)
+            time.sleep(0.3)
 
 
 #############################################################
@@ -121,7 +123,6 @@ if __name__ == '__main__':
     inlet = StreamInlet(streams[0])
     print("inlet created")
 
-    gui = GraphicalInterface()
     shared_vars = Shared()
     mutex = threading.Lock()
 

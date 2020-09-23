@@ -3,10 +3,10 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["left", "right", "none"]
+ACTIONS = ["left", "none", "right"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(75, 24, 1), shuffle=True, coupling=True, division_factor=5):
+def split_data(starting_dir="data", splitting_percentage=(70, 30, 0), shuffle=True, coupling=False, division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -105,12 +105,13 @@ def split_data(starting_dir="data", splitting_percentage=(75, 24, 1), shuffle=Tr
             for sample in range(num_training_samples, num_training_samples + num_validation_samples):
                 np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
-            tmp_dir = os.path.join("untouched_data", action)
-            if not os.path.exists(tmp_dir):
-                os.mkdir(tmp_dir)
-            for sample in range(num_training_samples + num_validation_samples,
-                                num_training_samples + num_validation_samples + num_untouched_samples):
-                np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
+            if untouched_per != 0:
+                tmp_dir = os.path.join("untouched_data", action)
+                if not os.path.exists(tmp_dir):
+                    os.mkdir(tmp_dir)
+                for sample in range(num_training_samples + num_validation_samples,
+                                    num_training_samples + num_validation_samples + num_untouched_samples):
+                    np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
 
 def load_data(starting_dir, shuffle=True, balance=False):
@@ -153,10 +154,10 @@ def load_data(starting_dir, shuffle=True, balance=False):
         for sample in data[i]:
             if i == 0:  # left
                 combined_data.append([sample, [1, 0, 0]])
-            elif i == 1:  # right
-                combined_data.append([sample, [0, 0, 1]])
-            elif i == 2:  # none
+            elif i == 1:  # none
                 combined_data.append([sample, [0, 1, 0]])
+            elif i == 2:  # right
+                combined_data.append([sample, [0, 0, 1]])
 
     if shuffle:
         np.random.shuffle(combined_data)
@@ -188,8 +189,9 @@ def standardize(data, std_type="channel_wise"):
             data[k] /= std
 
     if std_type == "channel_wise":
-        # this type of standardization prevents some channels to have more importance over other,
+        # this type of standardization prevents some channels to have more importance over others,
         # i.e. back head channels have more uVrms because of muscle tension in the back of the head
+        # this way we prevent the network from concentrating too much on those features
         for k in range(len(data)):
             sample = data[k]
             for i in range(len(sample)):
@@ -201,20 +203,17 @@ def standardize(data, std_type="channel_wise"):
     return data
 
 
-def visualize_data(train_X, validation_X, untouched_X):
+def visualize_data(train_X, validation_X, file_name, length):
     # takes a look at the data
-    fig, ax = plt.subplots(3)
-    fig.suptitle('Train, Validation, Untouched')
-    for j in range(4):
-        for i in range(8):
-            ax[0].plot(np.arange(len(train_X[j][i])), train_X[j][i].reshape(90))
-        for i in range(8):
-            ax[1].plot(np.arange(len(validation_X[j][i])), validation_X[j][i].reshape(90))
-        for i in range(8):
-            ax[2].plot(np.arange(len(untouched_X[j][i])), untouched_X[j][i].reshape(90))
-        plt.savefig(str(j) + ".png")
-        for i in range(3):
-            ax[i].clear()
+    fig, ax = plt.subplots(2)
+    fig.suptitle('Train, Validation')
+    for i in range(8):
+        ax[0].plot(np.arange(len(train_X[0][i])), train_X[0][i].reshape(length))
+    for i in range(8):
+        ax[1].plot(np.arange(len(validation_X[0][i])), validation_X[0][i].reshape(length))
+    plt.savefig(file_name + ".png")
+    for i in range(2):
+        ax[i].clear()
 
 
 def check_duplicate(train_X, test_X):
