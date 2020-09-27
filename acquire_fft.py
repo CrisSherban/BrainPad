@@ -13,7 +13,7 @@ class Shared:
     def __init__(self):
         self.sample = []
         self.action = None
-        self.NUM_ACTIONS = 20
+        self.NUM_ACTIONS = 150
 
 
 class ThreadPool(object):
@@ -32,6 +32,7 @@ class ThreadPool(object):
 
 
 def acquire_signals(mutex, pool, shared_vars):
+    last_act = None
     while True:
         with mutex:
             name = threading.currentThread().getName()
@@ -40,7 +41,22 @@ def acquire_signals(mutex, pool, shared_vars):
             if shared_vars.NUM_ACTIONS == 0:
                 break
 
-            shared_vars.action = ACTIONS[np.random.randint(3)]
+            if shared_vars.NUM_ACTIONS % 10 == 0:
+                input("Press enter to acquire a new action")
+                # will not release the mutex until enter is press
+                # this makes sure you are prepared for the next acquisition
+
+            shared_vars.NUM_ACTIONS -= 1
+
+            rand_act = np.random.randint(len(ACTIONS))
+            if rand_act == last_act:
+                rand_act = (rand_act + 1) % len(ACTIONS)
+
+            last_act = rand_act
+
+            shared_vars.action = ACTIONS[rand_act]
+            print("Think ", shared_vars.action, " in 3")
+            time.sleep(1)
             print("Think ", shared_vars.action, " in 2")
             time.sleep(1)
             print("Think ", shared_vars.action, " in 1")
@@ -48,10 +64,15 @@ def acquire_signals(mutex, pool, shared_vars):
             print("Think ", shared_vars.action, " NOW!!")
             time.sleep(0.2)
 
+            # one sample is made of more than one fft for each channel
             shared_vars.sample = []
-            for i in range(8):  # each of the 8 channels here
-                channel, timestamp = inlet.pull_sample()
-                shared_vars.sample.append(channel[:MAX_FREQ])
+            # in 1 second of acquisition we get ~25FFTs
+            # these FFTs represent overlaps between time-series EEG
+
+            for j in range(ACQUISITIONS_PER_SAMPLE):
+                for i in range(NUM_CHANNELS):  # each of the 8 channels here
+                    channel, timestamp = inlet.pull_sample()
+                    shared_vars.sample.append(channel[:MAX_FREQ])
 
             pool.makeInactive(name)
         time.sleep(0.5)
@@ -71,12 +92,8 @@ def save_sample(mutex, pool, shared_vars):
                 os.mkdir(actiondir)
 
             print(f"saving {shared_vars.action} data...")
-            np.save(os.path.join(actiondir, f"{int(time.time())}.npy"), np.array(shared_vars.sample))
-
-            input("Press enter to acquire a new action")
-            # will not release the mutex until enter is press
-            # this makes sure you are prepared for the next acquisition
-            shared_vars.NUM_ACTIONS -= 1
+            np.save(os.path.join(actiondir, f"{int(time.time())}.npy"),
+                    np.array(shared_vars.sample).reshape((NUM_CHANNELS, MAX_FREQ * ACQUISITIONS_PER_SAMPLE)))
 
             pool.makeInactive(name)
         time.sleep(0.5)
@@ -84,7 +101,9 @@ def save_sample(mutex, pool, shared_vars):
 
 if __name__ == '__main__':
     ACTIONS = ["left", "none", "right"]
-    MAX_FREQ = 90
+    NUM_CHANNELS = 8
+    ACQUISITIONS_PER_SAMPLE = 10
+    MAX_FREQ = 80
 
     datadir = "data"
     if not os.path.exists(datadir):

@@ -6,7 +6,7 @@ import os
 ACTIONS = ["left", "none", "right"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(70, 30, 0), shuffle=True, coupling=False, division_factor=0):
+def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -169,7 +169,7 @@ def load_data(starting_dir, shuffle=True, balance=False):
         X.append(sample)
         y.append(label)
 
-    return X, y
+    return np.array(X), np.array(y)
 
 
 def standardize(data, std_type="channel_wise"):
@@ -237,7 +237,7 @@ def check_duplicate(train_X, test_X):
     return False
 
 
-def gaussian_filter(x=np.linspace(0, 90, 90), mu=50, sig=0.5):
+def notch_filter(x=np.linspace(0, 90, 90), mu=50, sig=0.5):
     # with the default values this will make a good filter for the 50Hz noise from electronic equipment
     # change mu to 60 if you are in the US
     return -(np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))) + 1
