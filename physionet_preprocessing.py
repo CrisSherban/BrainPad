@@ -44,11 +44,15 @@ def get_wanted_files():
 
 
 def get_ffts():
+    fs = 160.0
+    lowcut = 8.0
+    highcut = 40.0
+
     # don't go higher than 80Hz, Shannon Theorem
-    band = [8, 40]  # this is for the FFTs physionet dataset samples eeg at 160Hz,
+    band = [int(lowcut), int(highcut)]  # this is for the FFTs physionet dataset samples eeg at 160Hz,
 
     subjects_files = get_wanted_files()
-    for subject in range(25):
+    for subject in range(1):
         for file in subjects_files[subject]:
             f = pyedflib.EdfReader(file)
             sampling_rate = 160
@@ -81,6 +85,7 @@ def get_ffts():
 
                 fft_data = []
                 for channel in range(len(good_data)):
+                    good_data[channel] = butter_bandpass_filter(good_data[channel], lowcut, highcut, fs, order=6)
                     fft_data.append(np.abs(fft(good_data[channel]))[band[0]:band[1]])
 
                 np.save(os.path.join(action_dir, f"{int(time.time() + previous_time + np.random.randint(0, 100))}.npy"),
@@ -137,7 +142,7 @@ def get_eeg():
 
 
 def main():
-    get_eeg()
+    get_ffts()
 
 
 if __name__ == "__main__":
