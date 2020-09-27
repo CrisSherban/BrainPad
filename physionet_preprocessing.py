@@ -1,10 +1,25 @@
 import pyedflib
 from matplotlib import pyplot as plt
+from scipy.signal import butter, lfilter
 from scipy import fft
 import numpy as np
 import time
 import re
 import os
+
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
 
 
 def get_wanted_files():
@@ -76,8 +91,12 @@ def get_ffts():
 
 
 def get_eeg():
+    fs = 160.0
+    lowcut = 8.0
+    highcut = 40.0
+
     subjects_files = get_wanted_files()
-    for subject in range(50):
+    for subject in range(1):
         for file in subjects_files[subject]:
             f = pyedflib.EdfReader(file)
             sampling_rate = 160
@@ -107,6 +126,8 @@ def get_eeg():
                 previous_time = int(previous_time + seconds * sampling_rate)
 
                 good_data = data[:, 160:320]
+                for i in range(len(good_data)):
+                    good_data[i] = butter_bandpass_filter(good_data[i], lowcut, highcut, fs, order=6)
 
                 np.save(os.path.join(action_dir, f"{int(time.time() + previous_time + np.random.randint(0, 100))}.npy"),
                         np.array(good_data))
