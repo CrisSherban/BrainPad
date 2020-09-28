@@ -1,15 +1,13 @@
 import keras
 from dataset_tools import load_data, standardize, ACTIONS
+from brainflow import DataFilter, FilterTypes, AggOperations
+from physionet_preprocessing import butter_bandpass_filter
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import numpy as np
 
 
 def evaluate_model(untouched_X, untouched_y, model_path):
-    print("loading untouched_data")
-    untouched_X = standardize(standardize(np.array(untouched_X))[:, :, :, np.newaxis], std_type="feature_wise")
-    untouched_y = np.array(untouched_y)
-
     model = keras.models.load_model(model_path)
     score = model.evaluate(untouched_X, untouched_y)
 
@@ -28,7 +26,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     ax = fig.add_subplot(111)
     ax.matshow(conf_mat, cmap=plt.get_cmap("RdYlGn"))
 
-    ACTIONS = ["left", "none", "right"]
+    ACTIONS = ["feet", "hands"]
     ax.set_xticklabels([""] + ACTIONS)
     ax.set_yticklabels([""] + ACTIONS)
 
@@ -45,7 +43,26 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/41.33-1epoch-1601216801-loss-0.23.model')
+    # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
+    untouched_X = standardize(tmp_untouched_X[:, :, 250:500])
+
+    fs = 250.0
+    lowcut = 8.0
+    highcut = 30.0
+
+    for sample in range(len(untouched_X)):
+        for channel in range(len(untouched_X[0])):
+            # DataFilter.perform_bandstop(train_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
+            # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
+            DataFilter.perform_rolling_filter(untouched_X[sample][channel], 3, AggOperations.MEAN.value)
+            untouched_X[sample][channel] = butter_bandpass_filter(untouched_X[sample][channel], lowcut, highcut, fs,
+                                                                  order=5)
+
+    # feature_wise standardization
+    untouched_X = standardize(untouched_X, std_type="feature_wise").reshape(
+        (len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
+
+    score = evaluate_model(untouched_X, untouched_y, 'models/70.83-46epoch-1601318483-loss-0.65.model')
     print("Accuracy on Untouched Data: ", score[1])

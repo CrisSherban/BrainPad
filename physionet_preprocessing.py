@@ -1,6 +1,6 @@
 import pyedflib
 from matplotlib import pyplot as plt
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, iirnotch
 from scipy import fft
 import numpy as np
 import time
@@ -142,7 +142,7 @@ def get_eeg():
 
 
 def main():
-    get_ffts()
+    get_eeg()
 
 
 if __name__ == "__main__":

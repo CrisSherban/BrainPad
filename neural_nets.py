@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras.backend
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
 from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D, Lambda, AveragePooling2D
 from keras import regularizers, Model
@@ -76,11 +77,13 @@ def cris_net(input_shape):
 def TA_CSPNN(nb_classes, Channels=64, Timesamples=90,
              dropOut=0.25, timeKernelLen=50, Ft=11, Fs=6):
     # full credits to: https://github.com/mahtamsv/TA-CSPNN/blob/master/TA_CSPNN.py
-    # Input shape is (trials, 1, number of channels, number of time samples)
+    # input (trials, 1, number of channels, number of time samples)
 
-    input_e = Input(shape=(Channels, Timesamples, 1))
-    convL1 = Conv2D(Ft, (1, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1), use_bias=False)(
-        input_e)
+    keras.backend.set_image_data_format('channels_first')
+
+    input_e = Input(shape=(1, Channels, Timesamples))
+    convL1 = Conv2D(Ft, (1, timeKernelLen), padding='same',
+                    input_shape=(1, Channels, Timesamples), use_bias=False)(input_e)
 
     bNorm1 = BatchNormalization(axis=1)(convL1)
 

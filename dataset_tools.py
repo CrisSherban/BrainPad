@@ -3,7 +3,7 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["left", "none", "right"]
+ACTIONS = ["feet", "none"]
 
 
 def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
@@ -153,11 +153,9 @@ def load_data(starting_dir, shuffle=True, balance=False):
     for i in range(len(ACTIONS)):
         for sample in data[i]:
             if i == 0:  # left
-                combined_data.append([sample, [1, 0, 0]])
+                combined_data.append([sample, [1, 0]])
             elif i == 1:  # none
-                combined_data.append([sample, [0, 1, 0]])
-            elif i == 2:  # right
-                combined_data.append([sample, [0, 0, 1]])
+                combined_data.append([sample, [0, 1]])
 
     if shuffle:
         np.random.shuffle(combined_data)
@@ -166,7 +164,7 @@ def load_data(starting_dir, shuffle=True, balance=False):
     X = []
     y = []
     for sample, label in combined_data:
-        X.append(sample)
+        X.append(np.array(sample)[:, :900])
         y.append(label)
 
     return np.array(X), np.array(y)
