@@ -6,7 +6,7 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["feet", "hands"]
+ACTIONS = ["feet", "none", "hands"]
 
 
 def split_data(starting_dir="data", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False, division_factor=0):
@@ -216,7 +216,7 @@ def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
     visualize_data(data, file_name="before", length=len(data[0, 0]))
 
     # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
-    data = standardize(data[:, :, 250:500])
+    data = standardize(data)
 
     visualize_data(data, file_name="after_std", length=len(data[0, 0]))
 
@@ -226,8 +226,8 @@ def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
         for channel in range(len(data[0])):
             DataFilter.perform_bandstop(data[sample][channel],
                                         250, 50.0, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
-            # DataFilter.perform_rolling_filter(train_X[sample][channel], 3, AggOperations.MEAN.value)
+            # DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
+            # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
 

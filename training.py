@@ -198,7 +198,7 @@ def main():
     # tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
     batch_size = 3
-    epochs = 60
+    epochs = 20
     '''
     model.fit(train_X, train_y, epochs=epochs, batch_size=batch_size, validation_data=(validation_X, validation_y))
     score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
