@@ -211,7 +211,7 @@ def visualize_data(data, file_name, length):
     plt.clf()
 
 
-def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
+def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60):
     print(data.shape)
     visualize_data(data, file_name="before", length=len(data[0, 0]))
 
@@ -224,13 +224,16 @@ def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
 
     for sample in range(len(data)):
         for channel in range(len(data[0])):
-            # DataFilter.perform_bandstop(data[sample][channel],250, 50.0, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
-            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
-            # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
+            DataFilter.perform_bandstop(data[sample][channel], 250, 50.0, 2.0, 5,
+                                        FilterTypes.BUTTERWORTH.value, 0)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
+            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
+            # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
 
-            fft_data[sample][channel] = fft(data[sample][channel])[:MAX_FREQ]
+            fft_data[sample][channel] = np.abs(fft(data[sample][channel])[:MAX_FREQ])
+
+    fft_data = standardize(fft_data)
 
     visualize_data(data, file_name="after_bandpass", length=len(data[0, 0]))
     visualize_data(fft_data, file_name="ffts", length=len(fft_data[0, 0]))

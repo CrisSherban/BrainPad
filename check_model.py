@@ -45,5 +45,7 @@ if __name__ == "__main__":
     untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X)
     untouched_X = untouched_X.reshape((len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/83.33-18epoch-1601397399-loss-0.34.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/81.67-72epoch-1601409709-loss-0.53.model')
     print("Accuracy on Untouched Data: ", score[1])
+
+    # models/80.0-77epoch-1601401377-loss-0.53.model

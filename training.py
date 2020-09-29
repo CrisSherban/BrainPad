@@ -1,34 +1,79 @@
 # huge thanks to @Sentdex for the inspiration:
 # https://github.com/Sentdex/BCI
-# also check out his version, he uses Conv1D nets
+# also check out his version
 
+# additionally check out how it should be done with CSP and LDA also:
+# https://mne.tools/dev/auto_examples/decoding/plot_decoding_csp_eeg.html
+from sklearn.model_selection import KFold, cross_val_score, StratifiedKFold
+from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier
 from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg, ACTIONS
 from neural_nets import cris_net, res_net, TA_CSPNN
-from common_spatial_patterns import CSP
-from matplotlib import pyplot as plt
-
-from sklearn.pipeline import Pipeline
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.model_selection import ShuffleSplit, cross_val_score
-
-from mne import Epochs, pick_types, events_from_annotations
-from mne.channels import make_standard_montage
-from mne.io import concatenate_raws, read_raw_edf
-from mne.datasets import eegbci
-from mne.decoding import CSP
 
 import numpy as np
 import time
 
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # shuts down GPU
 
 # print(tf.__version__)
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
 
+def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size):
+    # saving the model one epoch at a time
+    for epoch in range(epochs):
+        print("EPOCH: ", epoch)
+        model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
+                  validation_data=(validation_X, validation_y))
+        if epoch > epochs * 85 / 100:
+            score = model.evaluate(validation_X, validation_y)
+            MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
+            if round(score[1] * 100, 2) >= 80:
+                model.save(MODEL_NAME)
+                print("saved: ", MODEL_NAME)
 
-# check out how it should also be done with CSP and LDA:
-# https://mne.tools/dev/auto_examples/decoding/plot_decoding_csp_eeg.html
+
+def kfold_TA_CSPNN(model, train_X, train_y, epochs, num_folds, batch_size):
+    acc_per_fold = []
+    loss_per_fold = []
+
+    kfold = KFold(n_splits=num_folds, shuffle=True, )
+    fold_no = 1
+
+    for train, test in kfold.split(train_X, train_y):
+        model = model
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
+
+        print('------------------------------------------------------------------------')
+        print(f'Training for fold {fold_no} ...')
+
+        history = model.fit(train_X[train], train_y[train],
+                            batch_size=batch_size,
+                            epochs=epochs,
+                            verbose=0)
+        scores = model.evaluate(train_X[test], train_y[test], verbose=0)
+
+        print(f'Score for fold {fold_no}: {model.metrics_names[0]} of {scores[0]};'
+              f' {model.metrics_names[1]} of {scores[1] * 100}%')
+        acc_per_fold.append(scores[1] * 100)
+        loss_per_fold.append(scores[0])
+
+        # Increase fold number
+        fold_no += 1
+
+    # == Provide average scores ==
+    print('------------------------------------------------------------------------')
+    print('Score per fold')
+    for i in range(0, len(acc_per_fold)):
+        print('------------------------------------------------------------------------')
+        print(f'> Fold {i + 1} - Loss: {loss_per_fold[i]} - Accuracy: {acc_per_fold[i]}%')
+    print('------------------------------------------------------------------------')
+    print('Average scores for all folds:')
+    print(f'> Accuracy: {np.mean(acc_per_fold)} (+- {np.std(acc_per_fold)})')
+    print(f'> Loss: {np.mean(loss_per_fold)}')
+    print('------------------------------------------------------------------------')
+
 
 def main():
     split_data(shuffle=True, division_factor=0, coupling=False)
@@ -52,40 +97,19 @@ def main():
     fft_validation_X = standardize(np.abs(fft_validation_X))[:, :, :, np.newaxis]
 
     model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=8, timeKernelLen=50, Fs=6, Ft=11)
-
     # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
-
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
 
     # tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
-    batch_size = 3
-    epochs = 20
-    '''
-    model.fit(train_X, train_y, epochs=epochs, batch_size=batch_size, validation_data=(validation_X, validation_y))
-    score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
-    MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epochs}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-    if round(score[1] * 100, 2) >= 70:
-        model.save(MODEL_NAME)
-        print("saved: ", MODEL_NAME)
+    batch_size = 5
+    epochs = 80
 
-    return 0
-    '''
-
-    # saving the model one epoch at a time
-    for epoch in range(epochs):
-        print("EPOCH: ", epoch)
-        model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
-                  validation_data=(validation_X, validation_y))
-        if epoch > epochs * 80 / 100:
-            score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
-            MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-            if round(score[1] * 100, 2) >= 65:
-                model.save(MODEL_NAME)
-                print("saved: ", MODEL_NAME)
+    # kfold_TA_CSPNN(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
+    fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)
 
 
 if __name__ == "__main__":

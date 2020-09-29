@@ -74,7 +74,7 @@ def cris_net(input_shape):
     return model
 
 
-def TA_CSPNN(nb_classes, Channels=64, Timesamples=90,
+def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
              dropOut=0.25, timeKernelLen=50, Ft=11, Fs=6):
     # full credits to: https://github.com/mahtamsv/TA-CSPNN/blob/master/TA_CSPNN.py
     # input (trials, 1, number of channels, number of time samples)
