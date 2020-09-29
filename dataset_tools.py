@@ -1,9 +1,12 @@
+from brainflow import DataFilter, FilterTypes, AggOperations
+from physionet_preprocessing import butter_bandpass_filter
 from matplotlib import pyplot as plt
+from scipy.fft import fft
 from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["feet", "none"]
+ACTIONS = ["feet", "hands"]
 
 
 def split_data(starting_dir="data", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False, division_factor=0):
@@ -151,11 +154,10 @@ def load_data(starting_dir, shuffle=True, balance=False):
 
     # we are using one hot encodings
     for i in range(len(ACTIONS)):
+        lbl = np.zeros(len(ACTIONS), dtype=int)
+        lbl[i] = 1
         for sample in data[i]:
-            if i == 0:
-                combined_data.append([sample, [1, 0]])
-            elif i == 1:
-                combined_data.append([sample, [0, 1]])
+            combined_data.append([sample, lbl])
 
     if shuffle:
         np.random.shuffle(combined_data)
@@ -201,17 +203,40 @@ def standardize(data, std_type="channel_wise"):
     return data
 
 
-def visualize_data(train_X, validation_X, file_name, length):
+def visualize_data(data, file_name, length):
     # takes a look at the data
-    fig, ax = plt.subplots(2)
-    fig.suptitle('Train, Validation')
     for i in range(8):
-        ax[0].plot(np.arange(len(train_X[0][i])), train_X[0][i].reshape(length))
-    for i in range(8):
-        ax[1].plot(np.arange(len(validation_X[0][i])), validation_X[0][i].reshape(length))
+        plt.plot(np.arange(len(data[0][i])), data[0][i].reshape(length))
     plt.savefig(file_name + ".png")
-    for i in range(2):
-        ax[i].clear()
+    plt.clf()
+
+
+def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
+    print(data.shape)
+    visualize_data(data, file_name="before", length=len(data[0, 0]))
+
+    # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
+    data = standardize(data[:, :, 250:500])
+
+    visualize_data(data, file_name="after_std", length=len(data[0, 0]))
+
+    fft_data = np.zeros((len(data), len(data[0]), MAX_FREQ))
+
+    for sample in range(len(data)):
+        for channel in range(len(data[0])):
+            DataFilter.perform_bandstop(data[sample][channel],
+                                        250, 50.0, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
+            # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
+            # DataFilter.perform_rolling_filter(train_X[sample][channel], 3, AggOperations.MEAN.value)
+            data[sample][channel] = butter_bandpass_filter(data[sample][channel],
+                                                           lowcut, highcut, fs, order=5)
+
+            fft_data[sample][channel] = fft(data[sample][channel])[:MAX_FREQ]
+
+    visualize_data(data, file_name="after_bandpass", length=len(data[0, 0]))
+    visualize_data(fft_data, file_name="ffts", length=len(fft_data[0, 0]))
+
+    return data, fft_data
 
 
 def check_duplicate(train_X, test_X):

@@ -2,11 +2,10 @@
 # https://github.com/Sentdex/BCI
 # also check out his version, he uses Conv1D nets
 
-from dataset_tools import split_data, standardize, load_data, visualize_data
+from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg, ACTIONS
 from neural_nets import cris_net, res_net, TA_CSPNN
 from common_spatial_patterns import CSP
 from matplotlib import pyplot as plt
-from brainflow import DataFilter, FilterTypes, AggOperations
 
 from sklearn.pipeline import Pipeline
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -17,8 +16,6 @@ from mne.channels import make_standard_montage
 from mne.io import concatenate_raws, read_raw_edf
 from mne.datasets import eegbci
 from mne.decoding import CSP
-
-from physionet_preprocessing import butter_bandpass_filter
 
 import numpy as np
 import time
@@ -180,42 +177,18 @@ def main():
     # print("loading untouched_data")
     # untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
-    print(tmp_train_X.shape)
-    visualize_data(tmp_train_X, tmp_validation_X, file_name="before", length=len(tmp_train_X[0, 0]))
-
-    # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
-    train_X = standardize(tmp_train_X[:, :, 250:500])
-    validation_X = standardize(tmp_validation_X[:, :, 250:500])
-
-    visualize_data(train_X, validation_X, file_name="after_std", length=len(train_X[0, 0]))
-
-    fs = 250.0
-    lowcut = 5.0
-    highcut = 20.0
-
-    for sample in range(len(train_X)):
-        for channel in range(len(train_X[0])):
-            # DataFilter.perform_bandstop(train_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
-            # DataFilter.perform_rolling_filter(train_X[sample][channel], 3, AggOperations.MEAN.value)
-            train_X[sample][channel] = butter_bandpass_filter(train_X[sample][channel], lowcut, highcut, fs, order=5)
-
-    for sample in range(len(validation_X)):
-        for channel in range(len(validation_X[0])):
-            # DataFilter.perform_bandstop(validation_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(validation_X[sample][channel], 'coif3', 3)
-            # DataFilter.perform_rolling_filter(validation_X[sample][channel], 3, AggOperations.MEAN.value)
-            validation_X[sample][channel] = butter_bandpass_filter(validation_X[sample][channel],
-                                                                   lowcut, highcut, fs, order=5)
-
-    print(train_X.shape)
-    visualize_data(train_X, validation_X, file_name="after_bandpass", length=len(train_X[0, 0]))
+    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X)
+    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X)
 
     train_X = train_X.reshape((len(train_X), 1, len(train_X[0]), len(train_X[0, 0])))
     validation_X = validation_X.reshape((len(validation_X), 1, len(validation_X[0]), len(validation_X[0, 0])))
 
-    model = TA_CSPNN(nb_classes=2, Timesamples=250, Channels=8)
-    # model = cris_net((1, len(train_X[0]), len(train_X[0, 0])))
+    fft_train_X = standardize(np.abs(fft_train_X))[:, :, :, np.newaxis]
+    fft_validation_X = standardize(np.abs(fft_validation_X))[:, :, :, np.newaxis]
+
+    model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=8, timeKernelLen=50, Fs=6, Ft=11)
+
+    # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
 
     model.compile(loss='categorical_crossentropy',
@@ -224,17 +197,30 @@ def main():
 
     # tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
-    batch_size = 10
-    epochs = 50
+    batch_size = 3
+    epochs = 60
+    '''
+    model.fit(train_X, train_y, epochs=epochs, batch_size=batch_size, validation_data=(validation_X, validation_y))
+    score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
+    MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epochs}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
+    if round(score[1] * 100, 2) >= 70:
+        model.save(MODEL_NAME)
+        print("saved: ", MODEL_NAME)
+
+    return 0
+    '''
 
     # saving the model one epoch at a time
     for epoch in range(epochs):
-        model.fit(train_X, train_y, epochs=1, batch_size=batch_size, validation_data=(validation_X, validation_y))
-        score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
-        MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-        if round(score[1] * 100, 2) >= 70:
-            model.save(MODEL_NAME)
-            print("saved: ", MODEL_NAME)
+        print("EPOCH: ", epoch)
+        model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
+                  validation_data=(validation_X, validation_y))
+        if epoch > epochs * 80 / 100:
+            score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
+            MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
+            if round(score[1] * 100, 2) >= 65:
+                model.save(MODEL_NAME)
+                print("saved: ", MODEL_NAME)
 
 
 if __name__ == "__main__":

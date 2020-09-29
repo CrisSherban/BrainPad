@@ -2,7 +2,7 @@ import tensorflow as tf
 import keras.backend
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
 from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D, Lambda, AveragePooling2D
-from keras import regularizers, Model
+from keras import regularizers, Model, backend
 from keras.constraints import max_norm
 from keras.models import Sequential
 from dataset_tools import ACTIONS

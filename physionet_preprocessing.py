@@ -1,7 +1,7 @@
 import pyedflib
 from matplotlib import pyplot as plt
 from scipy.signal import butter, lfilter, iirnotch
-from scipy import fft
+from scipy.fft import fft
 import numpy as np
 import time
 import re
@@ -24,14 +24,15 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 def get_wanted_files():
     # 04, 08, 12 for motor imagery tasks
-    # 03, 07, 11 for actual motor tasks
+    # 03, 07, 11 for actual hand motor tasks
+    # 06, 10, 14 for hands and feet motor imagery tasks
     files_dir = "files"
 
     subjects_files = []
     for subject in sorted(os.listdir(files_dir)):
         edf_files = []
         for edf_file in os.listdir(os.path.join(files_dir, subject)):
-            regex = re.match(r'^.*(04|08|12).\bedf\b$', edf_file)
+            regex = re.match(r'^.*(06|10|14).\bedf\b$', edf_file)
             # regex that takes only .edf files for motor imagery (4, 8, 12) are the
             # runs we have to take in consideration for motor imagery
             # https://physionet.org/content/eegmmidb/1.0.0/
@@ -43,16 +44,12 @@ def get_wanted_files():
     return subjects_files
 
 
-def get_ffts():
-    fs = 160.0
-    lowcut = 8.0
-    highcut = 40.0
-
+def get_ffts(fs=160.0, lowcut=7.0, highcut=30.0):
     # don't go higher than 80Hz, Shannon Theorem
     band = [int(lowcut), int(highcut)]  # this is for the FFTs physionet dataset samples eeg at 160Hz,
 
     subjects_files = get_wanted_files()
-    for subject in range(1):
+    for subject in range(20):
         for file in subjects_files[subject]:
             f = pyedflib.EdfReader(file)
             sampling_rate = 160
@@ -95,11 +92,7 @@ def get_ffts():
         print("\rComputed: " + str(int(subject * 100 / len(subjects_files))) + "%  of the dataset", end='')
 
 
-def get_eeg():
-    fs = 160.0
-    lowcut = 8.0
-    highcut = 40.0
-
+def get_eeg(fs=160.0, lowcut=7.0, highcut=30.0):
     subjects_files = get_wanted_files()
     for subject in range(1):
         for file in subjects_files[subject]:
@@ -130,7 +123,12 @@ def get_eeg():
                 data = np.array(eeg_signals[:, previous_time:previous_time + int(seconds * sampling_rate)])
                 previous_time = int(previous_time + seconds * sampling_rate)
 
-                good_data = data[:, 160:320]
+                good_data = []
+                for i in range(len(data)):
+                    # choosing only some of the electrodes
+                    if i == 9 or i == 13 or i == 22 or i == 24 or i == 61 or i == 63 or i == 47 or i == 55:
+                        good_data.append(data[i, 160:320])
+
                 for i in range(len(good_data)):
                     good_data[i] = butter_bandpass_filter(good_data[i], lowcut, highcut, fs, order=6)
 

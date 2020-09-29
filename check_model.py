@@ -1,7 +1,5 @@
 import keras
-from dataset_tools import load_data, standardize, ACTIONS
-from brainflow import DataFilter, FilterTypes, AggOperations
-from physionet_preprocessing import butter_bandpass_filter
+from dataset_tools import load_data, ACTIONS, preprocess_raw_eeg
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 import numpy as np
@@ -44,22 +42,8 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 if __name__ == "__main__":
     tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
-    # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
-    untouched_X = standardize(tmp_untouched_X[:, :, 250:500])
-
-    fs = 250.0
-    lowcut = 7.0
-    highcut = 30.0
-
-    for sample in range(len(untouched_X)):
-        for channel in range(len(untouched_X[0])):
-            # DataFilter.perform_bandstop(train_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
-            # DataFilter.perform_rolling_filter(untouched_X[sample][channel], 3, AggOperations.MEAN.value)
-            untouched_X[sample][channel] = butter_bandpass_filter(untouched_X[sample][channel], lowcut, highcut, fs,
-                                                                  order=5)
-
+    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X)
     untouched_X = untouched_X.reshape((len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/70.0-34epoch-1601368489-loss-0.67.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/66.67-50epoch-1601386775-loss-0.67.model')
     print("Accuracy on Untouched Data: ", score[1])
