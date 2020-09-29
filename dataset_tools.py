@@ -224,9 +224,8 @@ def preprocess_raw_eeg(data, fs=250, lowcut=3.0, highcut=30.0, MAX_FREQ=60):
 
     for sample in range(len(data)):
         for channel in range(len(data[0])):
-            DataFilter.perform_bandstop(data[sample][channel],
-                                        250, 50.0, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
+            # DataFilter.perform_bandstop(data[sample][channel],250, 50.0, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
+            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
             # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
