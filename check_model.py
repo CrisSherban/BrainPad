@@ -26,7 +26,6 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     ax = fig.add_subplot(111)
     ax.matshow(conf_mat, cmap=plt.get_cmap("RdYlGn"))
 
-    ACTIONS = ["feet", "hands"]
     ax.set_xticklabels([""] + ACTIONS)
     ax.set_yticklabels([""] + ACTIONS)
 
@@ -49,20 +48,18 @@ if __name__ == "__main__":
     untouched_X = standardize(tmp_untouched_X[:, :, 250:500])
 
     fs = 250.0
-    lowcut = 8.0
+    lowcut = 7.0
     highcut = 30.0
 
     for sample in range(len(untouched_X)):
         for channel in range(len(untouched_X[0])):
             # DataFilter.perform_bandstop(train_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
             # DataFilter.perform_wavelet_denoising(train_X[sample][channel], 'coif3', 3)
-            DataFilter.perform_rolling_filter(untouched_X[sample][channel], 3, AggOperations.MEAN.value)
+            # DataFilter.perform_rolling_filter(untouched_X[sample][channel], 3, AggOperations.MEAN.value)
             untouched_X[sample][channel] = butter_bandpass_filter(untouched_X[sample][channel], lowcut, highcut, fs,
                                                                   order=5)
 
-    # feature_wise standardization
-    untouched_X = standardize(untouched_X, std_type="feature_wise").reshape(
-        (len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
+    untouched_X = untouched_X.reshape((len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/70.83-46epoch-1601318483-loss-0.65.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/70.0-34epoch-1601368489-loss-0.67.model')
     print("Accuracy on Untouched Data: ", score[1])

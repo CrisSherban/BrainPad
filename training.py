@@ -187,9 +187,11 @@ def main():
     train_X = standardize(tmp_train_X[:, :, 250:500])
     validation_X = standardize(tmp_validation_X[:, :, 250:500])
 
+    visualize_data(train_X, validation_X, file_name="after_std", length=len(train_X[0, 0]))
+
     fs = 250.0
-    lowcut = 8.0
-    highcut = 30.0
+    lowcut = 5.0
+    highcut = 20.0
 
     for sample in range(len(train_X)):
         for channel in range(len(train_X[0])):
@@ -203,20 +205,17 @@ def main():
             # DataFilter.perform_bandstop(validation_X[sample][channel], 250, 10.0, 1.0, 3, FilterTypes.BUTTERWORTH.value, 0)
             # DataFilter.perform_wavelet_denoising(validation_X[sample][channel], 'coif3', 3)
             # DataFilter.perform_rolling_filter(validation_X[sample][channel], 3, AggOperations.MEAN.value)
-            validation_X[sample][channel] = butter_bandpass_filter(validation_X[sample][channel], lowcut, highcut, fs,
-                                                                   order=5)
-
-    # feature_wise standardization
-    train_X = standardize(train_X, std_type="feature_wise").reshape(
-        (len(train_X), 1, len(train_X[0]), len(train_X[0, 0])))
-    validation_X = standardize(validation_X, std_type="feature_wise").reshape(
-        (len(validation_X), 1, len(validation_X[0]), len(validation_X[0, 0])))
+            validation_X[sample][channel] = butter_bandpass_filter(validation_X[sample][channel],
+                                                                   lowcut, highcut, fs, order=5)
 
     print(train_X.shape)
-    # visualize_data(train_X, validation_X, file_name="after", length=len(train_X[0, 0]))
+    visualize_data(train_X, validation_X, file_name="after_bandpass", length=len(train_X[0, 0]))
+
+    train_X = train_X.reshape((len(train_X), 1, len(train_X[0]), len(train_X[0, 0])))
+    validation_X = validation_X.reshape((len(validation_X), 1, len(validation_X[0]), len(validation_X[0, 0])))
 
     model = TA_CSPNN(nb_classes=2, Timesamples=250, Channels=8)
-    # model = cris_net((len(train_X[0]), len(train_X[0, 0]), 1))
+    # model = cris_net((1, len(train_X[0]), len(train_X[0, 0])))
     model.summary()
 
     model.compile(loss='categorical_crossentropy',
@@ -225,7 +224,7 @@ def main():
 
     # tf.keras.utils.plot_model(model, "pictures/crisnet.png", show_shapes=True)
 
-    batch_size = 3
+    batch_size = 10
     epochs = 50
 
     # saving the model one epoch at a time
@@ -233,7 +232,7 @@ def main():
         model.fit(train_X, train_y, epochs=1, batch_size=batch_size, validation_data=(validation_X, validation_y))
         score = model.evaluate(validation_X, validation_y, batch_size=batch_size)
         MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-        if round(score[1] * 100, 2) > 70:
+        if round(score[1] * 100, 2) >= 70:
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
 

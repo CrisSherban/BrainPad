@@ -6,7 +6,7 @@ import os
 ACTIONS = ["feet", "none"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
+def split_data(starting_dir="data", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False, division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -152,9 +152,9 @@ def load_data(starting_dir, shuffle=True, balance=False):
     # we are using one hot encodings
     for i in range(len(ACTIONS)):
         for sample in data[i]:
-            if i == 0:  # left
+            if i == 0:
                 combined_data.append([sample, [1, 0]])
-            elif i == 1:  # none
+            elif i == 1:
                 combined_data.append([sample, [0, 1]])
 
     if shuffle:

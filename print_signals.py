@@ -6,7 +6,7 @@ from dataset_tools import standardize
 import numpy as np
 import os
 
-# this script allows to plot the ffts as the model sees them
+# this script is a sketchbook to test and see the acquired data
 
 
 data = []
