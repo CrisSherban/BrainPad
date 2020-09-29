@@ -1,12 +1,15 @@
 # huge thanks to @Sentdex for the inspiration:
 # https://github.com/Sentdex/BCI
-import argparse
+
+# for more information on BrainFlow usage:
+# https://brainflow.readthedocs.io/en/stable/Examples.html
+
 
 from brainflow import BoardShim, BrainFlowInputParams, BoardIds
 from matplotlib import pyplot as plt
-from pylsl import StreamInlet, resolve_stream
-import threading
+
 import numpy as np
+import argparse
 import time
 import os
 
@@ -21,7 +24,15 @@ def save_sample(sample, action):
 
 
 if __name__ == '__main__':
+    # This is intended for OpenBCI Cyton Board,
+    # check: https://brainflow.readthedocs.io for other boards
+
     # this data acquisition is very prone to artifacts, remember to clean the data
+    # this protocol is thought in order to leave the subject time to prepare for the acquisition
+    # it also shows one raw EEG channel at each acquisition to check if there is interference
+
+    # BrainFlow will alert you with a warning if one acquired sample is corrupted,
+    # stop and delete that sample
 
     ACTIONS = ["hands", "none", "feet"]
     NUM_CHANNELS = 8
@@ -33,6 +44,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--serial-port', type=str, help='serial port',
                         required=False, default='/dev/ttyUSB0')
+
+    # if you are on Linux remember to give permission to access the port:
+    # sudo chmod 666 /dev/ttyUSB0
+    # or change the user group
+
     args = parser.parse_args()
     params = BrainFlowInputParams()
     params.serial_port = args.serial_port
@@ -72,7 +88,6 @@ if __name__ == '__main__':
             sample.append(data[channel])
 
         print(np.array(sample).shape)
-        # plotting one channel the first time to assure it's working
         for j in range(7, 8):
             plt.plot(np.arange(len(sample[j])), sample[j])
         plt.show()

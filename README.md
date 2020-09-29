@@ -3,6 +3,13 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
 <img src="pictures/helmet.jpg">
 
 ## Usage
+*   #### acquire_eeg.py
+    This script allows to connect to OpenBCI Cyton board through BrainFlow
+    and acquire data in form of raw EEG. <br>
+    For a Cyton board and a Linux machine the setup is the following:
+    *   Connect the Ultracortex Helmet with the Cyton Board to your machine
+    *   Run the script and follow the acquisition protocol
+    
 *   #### acquire_fft.py
     This script allows to connect to OpenBCI GUI
     through LSL Protocol and acquire data in form of FFT. <br>
@@ -12,6 +19,8 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     *   Set this script in the OpenBCI GUI Working Directory
     *   Set in the script the type of acquisition you want, for example [Left, Right, None]
     *   Think at the chosen action and press Enter
+    
+    Since the LSL support is deprecated, use the acquire_eeg.py and then transform to FFT.
  
 *   #### live_test.py
     This Python module gives the user a live testing environment of the system. <br>
@@ -19,7 +28,9 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     *   Connect the Ultracortex Helmet with the Cyton Board to your machine
     *   Open OpenBCI GUI
     *   Set this script in the OpenBCI GUI Working Directory
-    *   Think at some action from [Left, Right, None] and check on screen what happens
+    *   Mimic the motor imagery tasks you did in the acquisition protocol and check on screen what happens.
+    
+    I will update to a BrainFlow version very soon.
 
 *   #### dataset_tools.py
     This module provides functionalities for splitting a dataset, loading a dataset
@@ -32,15 +43,21 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     Provides the two different architectures used in this project. 
     *   A very deep architecture: ResNet
     *   A simplistic architecture based upon the knowledge from: <br> https://iopscience.iop.org/article/10.1088/1741-2552/ab0ab5/meta 
+    *   TA-CSPNN made for motor imagery classification tasks, all credits to:
+     <br> https://github.com/mahtamsv/TA-CSPNN/blob/master/TA_CSPNN.py
+     <br> https://ieeexplore.ieee.org/document/8857423
     
 ## Confusion Matrix so far:
 <img src="pictures/confusion_matrix.png">
 
-## How the model sees data:
+## A look at our samples:
+<img src="pictures/before.png">
+<img src="pictures/after_std.png">
+<img src="pictures/after_bandpass.png">
+<img src="pictures/ffts.png">
+
+## How the crisnet model sees data:
 <img src="pictures/how_model_sees.png">
 
-## A look at our samples:
-<img src="pictures/a_not_normalized_sample.png">
-
-## The Neural Network so far:
-<img src="pictures/crisnet.png">
+## The Best Neural Network so far:
+<img src="pictures/net.png">

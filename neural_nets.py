@@ -1,17 +1,19 @@
-import tensorflow as tf
-import keras.backend
 from keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
 from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D, Lambda, AveragePooling2D
-from keras import regularizers, Model, backend
+from keras import regularizers, Model
 from keras.constraints import max_norm
 from keras.models import Sequential
 from dataset_tools import ACTIONS
+
+import tensorflow as tf
+import keras.backend
 
 stride = 1
 CHANNEL_AXIS = 1
 
 
 def res_net():
+    # ResNet implementation
     def res_layer(x, filters, pooling=False, dropout=0.0):
         temp = x
         temp = Conv2D(filters, (3, 3), strides=stride, padding="same")(temp)
@@ -77,6 +79,7 @@ def cris_net(input_shape):
 def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
              dropOut=0.25, timeKernelLen=50, Ft=11, Fs=6):
     # full credits to: https://github.com/mahtamsv/TA-CSPNN/blob/master/TA_CSPNN.py
+    #                  https://ieeexplore.ieee.org/document/8857423
     # input (trials, 1, number of channels, number of time samples)
 
     keras.backend.set_image_data_format('channels_first')

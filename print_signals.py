@@ -1,8 +1,8 @@
 from matplotlib import pyplot as plt
-from physionet_preprocessing import butter_bandpass_filter, butter_bandpass
-from scipy.fft import fft
+from dataset_tools import butter_bandpass_filter
 from brainflow import DataFilter, FilterTypes, AggOperations
 from dataset_tools import standardize
+
 import numpy as np
 import os
 
@@ -12,7 +12,6 @@ import os
 data = []
 data_dir = "data/feet"
 for file in os.listdir(data_dir):
-    # each item is a ndarray of shape (8, 90) that represents ~= 1sec of acquisition
     data.append(np.load(os.path.join(data_dir, file)))
 
 '''
@@ -21,6 +20,7 @@ plt.title(str(num_samples_to_show) + " samples")
 plt.imshow(np.array(data[100:100 + num_samples_to_show]).reshape(8 * num_samples_to_show, 90), cmap="gray")
 plt.savefig("pictures/how_model_sees.png")
 '''
+
 print(data[0].shape)
 
 fs = 250.0

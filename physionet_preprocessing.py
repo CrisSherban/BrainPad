@@ -1,25 +1,11 @@
-import pyedflib
-from matplotlib import pyplot as plt
-from scipy.signal import butter, lfilter, iirnotch
+from dataset_tools import butter_bandpass_filter
 from scipy.fft import fft
+
 import numpy as np
+import pyedflib
 import time
 import re
 import os
-
-
-def butter_bandpass(lowcut, highcut, fs, order=5):
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = butter(order, [low, high], btype='band')
-    return b, a
-
-
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
-    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = lfilter(b, a, data)
-    return y
 
 
 def get_wanted_files():
@@ -139,9 +125,5 @@ def get_eeg(fs=160.0, lowcut=7.0, highcut=30.0):
         print("\rComputed: " + str(int(subject * 100 / len(subjects_files))) + "%  of the dataset", end='')
 
 
-def main():
-    get_eeg()
-
-
 if __name__ == "__main__":
-    main()
+    get_eeg()

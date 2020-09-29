@@ -1,11 +1,23 @@
-import keras
 from dataset_tools import load_data, ACTIONS, preprocess_raw_eeg
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
+
 import numpy as np
+import keras
 
 
 def evaluate_model(untouched_X, untouched_y, model_path):
+    """
+        This function creates the confusion matrix with matplotlib for
+        a graphical illustration
+    :param untouched_X: ndarray, data not touched by the model
+    :param untouched_y: ndarray, label
+    :param model_path: string, path of the previously saved model
+    :return:    Scalar test loss (if the model has a single output and no metrics)
+                or list of scalars (if the model has multiple outputs
+                and/or metrics). The attribute `model.metrics_names` will give you
+                the display labels for the scalar outputs.
+    """
     model = keras.models.load_model(model_path)
     score = model.evaluate(untouched_X, untouched_y)
 
@@ -48,4 +60,4 @@ if __name__ == "__main__":
     score = evaluate_model(untouched_X, untouched_y, 'models/81.67-72epoch-1601409709-loss-0.53.model')
     print("Accuracy on Untouched Data: ", score[1])
 
-    # models/80.0-77epoch-1601401377-loss-0.53.model
+    # also try out: models/80.0-77epoch-1601401377-loss-0.53.model

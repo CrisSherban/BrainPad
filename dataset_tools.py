@@ -1,8 +1,9 @@
 from brainflow import DataFilter, FilterTypes, AggOperations
-from physionet_preprocessing import butter_bandpass_filter
+from scipy.signal import butter, lfilter
 from matplotlib import pyplot as plt
 from scipy.fft import fft
 from colors import red, green
+
 import numpy as np
 import os
 
@@ -17,8 +18,8 @@ def split_data(starting_dir="data", splitting_percentage=(70, 20, 10), shuffle=T
     :param starting_dir: string, the directory of the dataset
     :param splitting_percentage:  tuple, (training_percentage, validation_percentage, untouched_percentage)
     :param shuffle: bool, decides if the data will be shuffled
-    :param division_factor: int, the data used is made of FFTs which are taken from multiple sittings
-                                so one sample is very similar to an adjacent one, so not all the samples
+    :param division_factor: int, if the data used is made of FFTs which are taken from multiple sittings
+                                one sample might be very similar to an adjacent one, so not all the samples
                                 should be considered because some very similar samples could fall both in
                                 validation and training, thus the division_factor divides the data.
                                 if division_factor == 0 the function will maintain all the data
@@ -203,28 +204,60 @@ def standardize(data, std_type="channel_wise"):
     return data
 
 
-def visualize_data(data, file_name, length):
+def visualize_data(data, file_name, title, length):
     # takes a look at the data
     for i in range(8):
         plt.plot(np.arange(len(data[0][i])), data[0][i].reshape(length))
+
+    plt.title(title)
     plt.savefig(file_name + ".png")
     plt.clf()
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = butter(order, [low, high], btype='band')
+    return b, a
 
-def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60):
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+
+def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60, power_hz=50):
+    """
+        Processes raw EEG data, filters 50Hz noise from electronics in EU, applies bandpass
+        and wavelet denoising.
+        Change power_hz to 60Hz if you are in the US
+        Check local power line frequency otherwise
+    :param data: ndarray, input dataset in to filter with shape=(samples, channels, values)
+    :param fs: int, sampling rate
+    :param lowcut: float, lower extreme for the bandpass filter
+    :param highcut: float, higher extreme for the bandpass filter
+    :param MAX_FREQ: int, maximum frequency for the FFTs
+    :return: tuple, (ndarray, ndarray), process data and FFTs respectively
+    """
     print(data.shape)
-    visualize_data(data, file_name="before", length=len(data[0, 0]))
+    visualize_data(data,
+                   file_name="pictures/before",
+                   title="RAW EEGs",
+                   length=len(data[0, 0]))
 
-    # data preprocessing: choose only 2nd second, standardize channels, bandpass_filter
     data = standardize(data)
 
-    visualize_data(data, file_name="after_std", length=len(data[0, 0]))
+    visualize_data(data,
+                   file_name="pictures/after_std",
+                   title="After Standardization",
+                   length=len(data[0, 0]))
 
     fft_data = np.zeros((len(data), len(data[0]), MAX_FREQ))
 
     for sample in range(len(data)):
         for channel in range(len(data[0])):
-            DataFilter.perform_bandstop(data[sample][channel], 250, 50.0, 2.0, 5,
+            DataFilter.perform_bandstop(data[sample][channel], 250, power_hz, 2.0, 5,
                                         FilterTypes.BUTTERWORTH.value, 0)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
@@ -235,15 +268,26 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60):
 
     fft_data = standardize(fft_data)
 
-    visualize_data(data, file_name="after_bandpass", length=len(data[0, 0]))
-    visualize_data(fft_data, file_name="ffts", length=len(fft_data[0, 0]))
+    visualize_data(data,
+                   file_name="pictures/after_bandpass",
+                   title=f'After bandpass from {lowcut}Hz to {highcut}Hz',
+                   length=len(data[0, 0]))
+    visualize_data(fft_data,
+                   file_name="pictures/ffts",
+                   title="FFTs",
+                   length=len(fft_data[0, 0]))
 
     return data, fft_data
 
 
 def check_duplicate(train_X, test_X):
-    # checks to see if we are misleading the model by accidentally copying
-    # the samples from training set to testing set
+    """
+        Checks if there is leaking from the splitting procedure
+    :param train_X: ndarray, the training set
+    :param test_X:  ndarray, the test set
+    :return: bool, True if there is some leaking, False otherwise
+    """
+    # TODO: find a less naive and faster alternative
     print("Checking duplicated samples split-wise...")
 
     tmp_train = np.array(train_X)
@@ -263,6 +307,8 @@ def check_duplicate(train_X, test_X):
 
 
 def notch_filter(x=np.linspace(0, 90, 90), mu=50, sig=0.5):
-    # with the default values this will make a good filter for the 50Hz noise from electronic equipment
+    # a modified gaussian to filter out electronic noise
     # change mu to 60 if you are in the US
+    # suggestion: use Brainflow bandstop instead:
+    # https://brainflow.readthedocs.io/en/stable/Examples.html
     return -(np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))) + 1
