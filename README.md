@@ -2,6 +2,17 @@
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
 <img src="pictures/helmet.jpg">
 
+## Data Acquisition:
+The "data" folder provides the current EEG samples taken following this protocol:<br>
+The person sits in a comfortable position on a chair and follows the `acquire_eeg.py`
+protocol. When the programs tells to think "hands" the subject imagines opening and closing
+both hands. If "none" is presented the subject can wonder, and think at something else.
+If "feet" is presented the subject imagines moving the feet up and down. <br>
+The subject does not blink during acquisitions.
+
+Each sample is stored as a numpy 2D array in an .npy file that has the following shape:<br>
+`(8, 250)`
+
 ## Usage
 *   #### acquire_eeg.py
     This script allows to connect to OpenBCI Cyton board through BrainFlow
@@ -40,7 +51,7 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
     Allows to check how well a model is doing on some unseen set of data.
     
 *   #### neural_nets.py
-    Provides the two different architectures used in this project. 
+    Provides three different architectures used in this project. 
     *   A very deep architecture: ResNet
     *   A simplistic architecture based upon the knowledge from: <br> https://iopscience.iop.org/article/10.1088/1741-2552/ab0ab5/meta 
     *   TA-CSPNN made for motor imagery classification tasks, all credits to:

@@ -213,6 +213,7 @@ def visualize_data(data, file_name, title, length):
     plt.savefig(file_name + ".png")
     plt.clf()
 
+
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -227,7 +228,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 
-def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60, power_hz=50):
+def preprocess_raw_eeg(data, fs=250, lowcut=11.3, highcut=30.0, MAX_FREQ=60, power_hz=50):
     """
         Processes raw EEG data, filters 50Hz noise from electronics in EU, applies bandpass
         and wavelet denoising.
@@ -260,8 +261,12 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=40.0, MAX_FREQ=60, powe
             DataFilter.perform_bandstop(data[sample][channel], 250, power_hz, 2.0, 5,
                                         FilterTypes.BUTTERWORTH.value, 0)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
+                                                           2, 80, fs, order=5)
+            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 1)
+            data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
-            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 3)
+
+            # DataFilter.perform_wavelet_denoising(data[sample][channel], 'db6', 3)
             # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
 
             fft_data[sample][channel] = np.abs(fft(data[sample][channel])[:MAX_FREQ])

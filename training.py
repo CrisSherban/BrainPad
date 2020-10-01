@@ -30,7 +30,7 @@ def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, ba
         if epoch > epochs * 85 / 100:
             score = model.evaluate(validation_X, validation_y)
             MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-            if round(score[1] * 100, 2) >= 80:
+            if round(score[1] * 100, 2) >= 75:
                 model.save(MODEL_NAME)
                 print("saved: ", MODEL_NAME)
 
@@ -89,12 +89,19 @@ def main():
     validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X)
 
     # reshaping to channels_first method
-    train_X = train_X.reshape((len(train_X), 1, len(train_X[0]), len(train_X[0, 0])))
-    validation_X = validation_X.reshape((len(validation_X), 1, len(validation_X[0]), len(validation_X[0, 0])))
+    train_X = train_X.reshape((len(train_X), len(train_X[0]), len(train_X[0, 0]), 1))
+    validation_X = validation_X.reshape((len(validation_X), len(validation_X[0]), len(validation_X[0, 0]), 1))
 
     # computing absolute value element-wise of the ffts, necessary if crisnet is chosen
     fft_train_X = standardize(np.abs(fft_train_X))[:, :, :, np.newaxis]
     fft_validation_X = standardize(np.abs(fft_validation_X))[:, :, :, np.newaxis]
+
+    n_subseq = 10
+    n_timesteps = 25
+    # train_X = train_X.reshape((len(train_X), n_subseq, len(train_X[0]), n_timesteps, 1))
+    # validation_X = validation_X.reshape((len(validation_X), n_subseq, len(validation_X[0]), n_timesteps, 1))
+
+    print("train_X shape: ", train_X.shape)
 
     model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=8, timeKernelLen=50, Fs=6, Ft=11)
     # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
@@ -106,9 +113,9 @@ def main():
     # tf.keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
     batch_size = 5
-    epochs = 80
+    epochs = 100
 
-    # kfold_TA_CSPNN(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
+    # kfold_cross_val(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
     fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)
 
 

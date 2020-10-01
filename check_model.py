@@ -27,7 +27,8 @@ def evaluate_model(untouched_X, untouched_y, model_path):
     y_true = [np.where(i == 1)[0][0] for i in untouched_y]  # one hot to int
     for i in range(len(predictions)):
         y_pred.append(np.argmax(predictions[i]))
-        print(round(predictions[i][np.argmax(predictions[i])], 2))  # checks confidence
+        print(ACTIONS[np.argmax(predictions[i])], " ",
+              round(predictions[i][np.argmax(predictions[i])], 4))  # checks confidence
 
     conf_mat = confusion_matrix(y_true, y_pred, normalize="true")
     print(conf_mat)
@@ -41,7 +42,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
     for i in range(len(conf_mat)):
         for j in range(len(conf_mat[0])):
-            ax.text(j, i, str(round(float(conf_mat[i, j]), 2)), va="center", ha="center")
+            ax.text(j, i, str(round(float(conf_mat[i, j]), 4)), va="center", ha="center")
 
     plt.title("Confusion Matrix with models/best.model")
     plt.ylabel("Action Thought")
@@ -52,12 +53,18 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="validation_data")
 
     untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X)
-    untouched_X = untouched_X.reshape((len(untouched_X), 1, len(untouched_X[0]), len(untouched_X[0, 0])))
+    untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/81.67-72epoch-1601409709-loss-0.53.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/75.0-90epoch-1601510963-loss-0.67.model')
     print("Accuracy on Untouched Data: ", score[1])
 
     # also try out: models/80.0-77epoch-1601401377-loss-0.53.model
+
+    # the best: conv kernel(3, def), lowcut=11.3, highcut=30.0,
+    # models/76.67-98epoch-1601507713-loss-0.58.model
+
+    # the best 2: conv kernel(8, def), lowcut=11.3, highcut=30.0,
+    # models/78.33-97epoch-1601508005-loss-0.68.model
