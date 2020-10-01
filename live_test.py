@@ -1,5 +1,4 @@
 from pylsl import StreamInlet, resolve_stream
-from dataset_tools import gaussian_filter
 import numpy as np
 import time
 import cv2
@@ -7,6 +6,8 @@ import keras
 import threading
 from matplotlib import pyplot as plt
 
+# DEPRECATED: USE live_test_brainflow.py
+# this will become an FFT version for another model
 
 # The usage of 2 threads is required if continuous data flow from the
 # LSL StreamInlet is wanted, so the threads can be timed without interfering with the StreamInlet
@@ -76,8 +77,6 @@ def compute_signals():
             for i in range(len(sample)):
                 sample[i] -= sample[i].mean()
                 sample[i] /= sample[i].std()
-
-            sample *= gaussian_filter()
 
             nn_input = sample.reshape((1, 8, 90, 1))
             nn_out = model.predict(nn_input)

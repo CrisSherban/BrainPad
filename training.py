@@ -13,6 +13,7 @@ from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg
 from neural_nets import cris_net, res_net, TA_CSPNN
 
 import numpy as np
+import keras
 import time
 
 
@@ -110,7 +111,7 @@ def main():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    # tf.keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
+    keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
     batch_size = 5
     epochs = 110
