@@ -113,7 +113,7 @@ def main():
     # tf.keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
     batch_size = 5
-    epochs = 100
+    epochs = 110
 
     # kfold_cross_val(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
     fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)

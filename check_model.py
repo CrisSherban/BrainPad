@@ -53,12 +53,12 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    tmp_untouched_X, untouched_y = load_data(starting_dir="validation_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
     untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X)
     untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/75.0-90epoch-1601510963-loss-0.67.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/75.0-94epoch-1601543134-loss-0.61.model')
     print("Accuracy on Untouched Data: ", score[1])
 
     # also try out: models/80.0-77epoch-1601401377-loss-0.53.model

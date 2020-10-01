@@ -9,6 +9,7 @@ import os
 
 
 def get_wanted_files():
+    # https://physionet.org/content/eegmmidb/1.0.0/
     # 04, 08, 12 for motor imagery tasks
     # 03, 07, 11 for actual hand motor tasks
     # 06, 10, 14 for hands and feet motor imagery tasks
@@ -21,7 +22,6 @@ def get_wanted_files():
             regex = re.match(r'^.*(06|10|14).\bedf\b$', edf_file)
             # regex that takes only .edf files for motor imagery (4, 8, 12) are the
             # runs we have to take in consideration for motor imagery
-            # https://physionet.org/content/eegmmidb/1.0.0/
             if regex:
                 edf_files.append(os.path.join(files_dir, subject, regex.group()))
         subjects_files.append(edf_files)

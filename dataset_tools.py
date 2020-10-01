@@ -134,7 +134,6 @@ def load_data(starting_dir, shuffle=True, balance=False):
 
         data_dir = os.path.join(starting_dir, action)
         for file in sorted(os.listdir(data_dir)):
-            # each item is a ndarray of shape (8, 90) that represents ~= 1sec of acquisition
             data[i].append(np.load(os.path.join(data_dir, file)))
 
     if balance:
@@ -167,7 +166,7 @@ def load_data(starting_dir, shuffle=True, balance=False):
     X = []
     y = []
     for sample, label in combined_data:
-        X.append(np.array(sample)[:, :900])
+        X.append(sample)
         y.append(label)
 
     return np.array(X), np.array(y)
