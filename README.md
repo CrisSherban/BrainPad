@@ -5,7 +5,7 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
 ## Data Acquisition:
 The "data" folder provides the current EEG samples taken following this protocol:<br>
 The person sits in a comfortable position on a chair and follows the `acquire_eeg.py`
-protocol. When the programs tells to think "hands" the subject imagines opening and closing
+protocol. When the program tells to think "hands" the subject imagines opening and closing
 both hands. If "none" is presented the subject can wonder, and think at something else.
 If "feet" is presented the subject imagines moving the feet up and down. <br>
 The subject does not blink during acquisitions.
