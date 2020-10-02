@@ -25,10 +25,14 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
     y_pred = []
     y_true = [np.where(i == 1)[0][0] for i in untouched_y]  # one hot to int
+
     for i in range(len(predictions)):
         y_pred.append(np.argmax(predictions[i]))
-        print(ACTIONS[np.argmax(predictions[i])], " ",
-              round(predictions[i][np.argmax(predictions[i])], 4))  # checks confidence
+
+        # checks confidence
+        print(str(ACTIONS[np.argmax(predictions[i])]) + " " +
+              str(round(predictions[i][np.argmax(predictions[i])], 4)) +
+              " right answer is: " + str(ACTIONS[y_true[i]]))
 
     conf_mat = confusion_matrix(y_true, y_pred, normalize="true")
     print(conf_mat)
@@ -44,7 +48,7 @@ def evaluate_model(untouched_X, untouched_y, model_path):
         for j in range(len(conf_mat[0])):
             ax.text(j, i, str(round(float(conf_mat[i, j]), 4)), va="center", ha="center")
 
-    plt.title("Confusion Matrix with models/best.model")
+    plt.title("Confusion Matrix")
     plt.ylabel("Action Thought")
     plt.xlabel("Action Predicted")
     plt.savefig("pictures/confusion_matrix.png")
@@ -53,12 +57,12 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="validation_data")
 
-    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X)
+    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=11.2, highcut=41, coi3order=1)
     untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/75.0-94epoch-1601543134-loss-0.61.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/74.67-332epoch-1601635685-loss-0.63.model')
     print("Accuracy on Untouched Data: ", score[1])
 
     # also try out: models/80.0-77epoch-1601401377-loss-0.53.model

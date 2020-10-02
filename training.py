@@ -11,6 +11,8 @@
 from sklearn.model_selection import KFold
 from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg, ACTIONS
 from neural_nets import cris_net, res_net, TA_CSPNN
+from keras.callbacks import History
+from matplotlib import pyplot as plt
 
 import numpy as np
 import keras
@@ -23,17 +25,35 @@ import time
 # print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
 
 def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size):
+    val_acc = []
+    acc = []
+
     # saving the model one epoch at a time
     for epoch in range(epochs):
         print("EPOCH: ", epoch)
-        model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
-                  validation_data=(validation_X, validation_y))
-        if epoch > epochs * 85 / 100:
-            score = model.evaluate(validation_X, validation_y)
-            MODEL_NAME = f"models/{round(score[1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(score[0], 2)}.model"
-            if round(score[1] * 100, 2) >= 75:
-                model.save(MODEL_NAME)
-                print("saved: ", MODEL_NAME)
+        history = model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
+                            validation_data=(validation_X, validation_y))
+
+        val_loss = history.history["val_loss"][-1]
+        score = history.history["val_accuracy"][-1]
+        val_acc.append(score)
+        acc.append(history.history["accuracy"][-1])
+
+        MODEL_NAME = f"models/{round(score * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss, 2)}.model"
+
+        if round(score * 100, 2) >= 74:
+            model.save(MODEL_NAME)
+            print("saved: ", MODEL_NAME)
+
+        if round(score * 100, 2) >= 75:
+            # plotting only if it's worth plotting
+            plt.plot(np.arange(len(val_acc)), val_acc)
+            plt.plot(np.arange(len(acc)), acc)
+            plt.title('Model Accuracy')
+            plt.ylabel('accuracy')
+            plt.xlabel('epoch')
+            plt.legend(['val', 'train'], loc='upper left')
+            plt.show()
 
 
 def kfold_cross_val(model, train_X, train_y, epochs, num_folds, batch_size):
@@ -86,10 +106,10 @@ def main():
     tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
     # cleaning the raw data
-    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X)
-    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X)
+    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=11.2, highcut=41, coi3order=1)
+    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=11.2, highcut=41, coi3order=1)
 
-    # reshaping to channels_first method
+    # reshaping
     train_X = train_X.reshape((len(train_X), len(train_X[0]), len(train_X[0, 0]), 1))
     validation_X = validation_X.reshape((len(validation_X), len(validation_X[0]), len(validation_X[0, 0]), 1))
 
@@ -97,14 +117,18 @@ def main():
     fft_train_X = standardize(np.abs(fft_train_X))[:, :, :, np.newaxis]
     fft_validation_X = standardize(np.abs(fft_validation_X))[:, :, :, np.newaxis]
 
+    """"
+    Start from here if you want to try ConvLSTM2D as first layers in the networks
+    
     n_subseq = 10
     n_timesteps = 25
     # train_X = train_X.reshape((len(train_X), n_subseq, len(train_X[0]), n_timesteps, 1))
     # validation_X = validation_X.reshape((len(validation_X), n_subseq, len(validation_X[0]), n_timesteps, 1))
+    """
 
     print("train_X shape: ", train_X.shape)
 
-    model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=8, timeKernelLen=50, Fs=6, Ft=11)
+    model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=8, timeKernelLen=55, dropOut=0.33)
     # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
     model.compile(loss='categorical_crossentropy',
@@ -113,8 +137,8 @@ def main():
 
     keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
-    batch_size = 5
-    epochs = 110
+    batch_size = 20
+    epochs = 450
 
     # kfold_cross_val(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
     fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)

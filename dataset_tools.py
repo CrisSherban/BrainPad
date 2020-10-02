@@ -10,7 +10,7 @@ import os
 ACTIONS = ["feet", "none", "hands"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False, division_factor=0):
+def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -227,7 +227,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 
-def preprocess_raw_eeg(data, fs=250, lowcut=11.3, highcut=30.0, MAX_FREQ=60, power_hz=50):
+def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, power_hz=50, coi3order=3):
     """
         Processes raw EEG data, filters 50Hz noise from electronics in EU, applies bandpass
         and wavelet denoising.
@@ -240,18 +240,18 @@ def preprocess_raw_eeg(data, fs=250, lowcut=11.3, highcut=30.0, MAX_FREQ=60, pow
     :param MAX_FREQ: int, maximum frequency for the FFTs
     :return: tuple, (ndarray, ndarray), process data and FFTs respectively
     """
-    print(data.shape)
-    visualize_data(data,
-                   file_name="pictures/before",
-                   title="RAW EEGs",
-                   length=len(data[0, 0]))
+    # print(data.shape)
+    # visualize_data(data,
+    #               file_name="pictures/before",
+    #               title="RAW EEGs",
+    #               length=len(data[0, 0]))
 
     data = standardize(data)
 
-    visualize_data(data,
-                   file_name="pictures/after_std",
-                   title="After Standardization",
-                   length=len(data[0, 0]))
+    # visualize_data(data,
+    #               file_name="pictures/after_std",
+    #               title="After Standardization",
+    #               length=len(data[0, 0]))
 
     fft_data = np.zeros((len(data), len(data[0]), MAX_FREQ))
 
@@ -261,7 +261,7 @@ def preprocess_raw_eeg(data, fs=250, lowcut=11.3, highcut=30.0, MAX_FREQ=60, pow
                                         FilterTypes.BUTTERWORTH.value, 0)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            2, 80, fs, order=5)
-            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', 1)
+            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', coi3order)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel],
                                                            lowcut, highcut, fs, order=5)
 
@@ -276,10 +276,10 @@ def preprocess_raw_eeg(data, fs=250, lowcut=11.3, highcut=30.0, MAX_FREQ=60, pow
                    file_name="pictures/after_bandpass",
                    title=f'After bandpass from {lowcut}Hz to {highcut}Hz',
                    length=len(data[0, 0]))
-    visualize_data(fft_data,
-                   file_name="pictures/ffts",
-                   title="FFTs",
-                   length=len(fft_data[0, 0]))
+    # visualize_data(fft_data,
+    #               file_name="pictures/ffts",
+    #               title="FFTs",
+    #               length=len(fft_data[0, 0]))
 
     return data, fft_data
 

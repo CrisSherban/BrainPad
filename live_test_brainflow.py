@@ -4,7 +4,7 @@
 from brainflow import BoardShim, BrainFlowInputParams, BoardIds
 from matplotlib import pyplot as plt
 from timeit import default_number as timer
-from dataset_tools import ACTIONS
+from dataset_tools import ACTIONS, preprocess_raw_eeg
 
 import numpy as np
 import threading
@@ -86,7 +86,8 @@ def compute_signals():
             env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
 
             # prediction on the task
-            nn_input = shared_vars.sample.reshape(1, 8, 250, 1)  # 4D Tensor
+            nn_input = preprocess_raw_eeg(shared_vars.sample, fs=250, lowcut=11.2, highcut=41, coi3order=1)
+            nn_input = nn_input.reshape(1, 8, 250, 1)  # 4D Tensor
             nn_out = model.predict(nn_input)
 
             # computing exponential moving average

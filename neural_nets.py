@@ -109,7 +109,7 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
     # keras.backend.set_image_data_format('channels_first')
 
     model = Sequential()
-    model.add(Conv2D(Ft, (8, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1), use_bias=False))
+    model.add(Conv2D(Ft, (1, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1), use_bias=False))
     model.add(BatchNormalization(axis=1))
     model.add(DepthwiseConv2D((Channels, 1), use_bias=False, depth_multiplier=Fs, depthwise_constraint=max_norm(1.)))
     model.add(BatchNormalization(axis=1))
