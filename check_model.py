@@ -62,10 +62,10 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 if __name__ == "__main__":
     tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
-    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=7, highcut=45, coi3order=0)
+    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=8, highcut=45, coi3order=0)
     untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/80.0-167epoch-1601812894-loss-0.47.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/73.75-230epoch-1601815738-loss-0.6.model')
     print("Accuracy on Untouched Data: ", score[1])
 
     # models/77.33-184epoch-1601636305-loss-0.56.model
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     # models/85.42-281epoch-1601757813-loss-0.41.model'
 
     # best out of the very best
-    #models/80.0-167epoch-1601812894-loss-0.47.model no coif
+    #models/80.0-167epoch-1601812894-loss-0.47.model no coif, 7-45 hz

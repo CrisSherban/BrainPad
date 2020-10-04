@@ -7,7 +7,7 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["feet", "none", "hands"]
+ACTIONS = ["feet","none", "hands"]
 
 
 def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False,

@@ -134,8 +134,8 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
 
 
 def EEGNet(nb_classes, Chans=8, Samples=250,
-           dropoutRate=0.5, kernLength=125, F1=8,
-           D=2, F2=16, norm_rate=0.25, dropoutType='Dropout'):
+           dropoutRate=0.5, kernLength=125, F1=7,
+           D=2, F2=7, norm_rate=0.25, dropoutType='Dropout'):
     """ Keras Implementation of EEGNet
     http://iopscience.iop.org/article/10.1088/1741-2552/aace8c/meta
     Note that this implements the newest version of EEGNet and NOT the earlier
@@ -216,8 +216,7 @@ def EEGNet(nb_classes, Chans=8, Samples=250,
     block1 = AveragePooling2D((1, 4))(block1)
     block1 = dropoutType(dropoutRate)(block1)
 
-    block2 = SeparableConv2D(F2, (1, 16),
-                             use_bias=False, padding='same')(block1)
+    block2 = SeparableConv2D(F2, (1, 16), use_bias=False, padding='same')(block1)
     block2 = BatchNormalization(axis=1)(block2)
     block2 = Activation('elu')(block2)
     block2 = AveragePooling2D((1, 8))(block2)
@@ -225,8 +224,7 @@ def EEGNet(nb_classes, Chans=8, Samples=250,
 
     flatten = Flatten(name='flatten')(block2)
 
-    dense = Dense(nb_classes, name='dense',
-                  kernel_constraint=max_norm(norm_rate))(flatten)
+    dense = Dense(nb_classes, name='dense', kernel_constraint=max_norm(norm_rate))(flatten)
     softmax = Activation('softmax', name='softmax')(dense)
 
     return Model(inputs=input1, outputs=softmax)

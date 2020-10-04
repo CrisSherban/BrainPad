@@ -40,7 +40,7 @@ def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, ba
 
         MODEL_NAME = f"models/{round(score * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss, 2)}.model"
 
-        if 77 <= round(score * 100, 2) <= 80 and round(history.history["accuracy"][-1] * 100, 2) >= 78:
+        if  round(score * 100, 4) >= 81 and round(history.history["accuracy"][-1] * 100, 4) >= 81:
             # saving & plotting only relevant models
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
@@ -154,8 +154,8 @@ def main():
     tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
     # cleaning the raw personal_dataset
-    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=7, highcut=45, coi3order=0)
-    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=7, highcut=45, coi3order=0)
+    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=8, highcut=45, coi3order=0)
+    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=8, highcut=45, coi3order=0)
 
     # check_other_classifiers(train_X, train_y, validation_X, validation_y)
 
@@ -185,10 +185,10 @@ def main():
     # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
     model.compile(loss='categorical_crossentropy',
-                  optimizer='adam',
+                  optimizer='nadam',
                   metrics=['accuracy'])
 
-    # keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
+    keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
     batch_size = 16
     epochs = 700
