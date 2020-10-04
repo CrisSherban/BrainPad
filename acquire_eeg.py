@@ -19,7 +19,7 @@ def save_sample(sample, action):
     if not os.path.exists(actiondir):
         os.mkdir(actiondir)
 
-    print(f"saving {action} data...")
+    print(f"saving {action} personal_dataset...")
     np.save(os.path.join(actiondir, f"{int(time.time())}.npy"), np.array(sample))
 
 
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # This is intended for OpenBCI Cyton Board,
     # check: https://brainflow.readthedocs.io for other boards
 
-    # this data acquisition is very prone to artifacts, remember to clean the data
+    # this personal_dataset acquisition is very prone to artifacts, remember to clean the personal_dataset
     # this protocol is thought in order to leave the subject time to prepare for the acquisition
     # it also shows one raw EEG channel at each acquisition to check if there is interference
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     ACTIONS = ["hands", "none", "feet"]
     NUM_CHANNELS = 8
 
-    datadir = "data"
+    datadir = "personal_dataset"
     if not os.path.exists(datadir):
         os.mkdir(datadir)
 

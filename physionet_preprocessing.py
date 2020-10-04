@@ -13,14 +13,14 @@ def get_wanted_files():
     # 04, 08, 12 for motor imagery tasks
     # 03, 07, 11 for actual hand motor tasks
     # 06, 10, 14 for hands and feet motor imagery tasks
-    files_dir = "files"
+    files_dir = "physionet_dataset"
 
     subjects_files = []
     for subject in sorted(os.listdir(files_dir)):
         edf_files = []
         for edf_file in os.listdir(os.path.join(files_dir, subject)):
             regex = re.match(r'^.*(06|10|14).\bedf\b$', edf_file)
-            # regex that takes only .edf files for motor imagery (4, 8, 12) are the
+            # regex that takes only .edf physionet_dataset for motor imagery (4, 8, 12) are the
             # runs we have to take in consideration for motor imagery
             if regex:
                 edf_files.append(os.path.join(files_dir, subject, regex.group()))
@@ -57,7 +57,7 @@ def get_ffts(fs=160.0, lowcut=7.0, highcut=30.0):
             previous_time = 0
             for seconds, label in zip(annotations[1], annotations[2]):
 
-                action_dir = os.path.join("data", action_lut[label])
+                action_dir = os.path.join("personal_dataset", action_lut[label])
                 if not os.path.exists(action_dir):
                     os.mkdir(action_dir)
 
@@ -102,7 +102,7 @@ def get_eeg(fs=160.0, lowcut=7.0, highcut=30.0):
             previous_time = 0
             for seconds, label in zip(annotations[1], annotations[2]):
 
-                action_dir = os.path.join("data", action_lut[label])
+                action_dir = os.path.join("personal_dataset", action_lut[label])
                 if not os.path.exists(action_dir):
                     os.mkdir(action_dir)
 

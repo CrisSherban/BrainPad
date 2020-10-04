@@ -52,24 +52,28 @@ def res_net():
 
 
 def cris_net(input_shape):
-    # simple networked with added MaxPools
+    # simple network
     # inspiration from:
     # https://iopscience.iop.org/article/10.1088/1741-2552/ab0ab5/meta
 
     model = Sequential([
-        Conv2D(filters=16, kernel_size=(3, 3), activation='tanh',
+        Conv2D(filters=10, kernel_size=(1, 20), activation='tanh',
                padding="same", input_shape=input_shape),
 
-        MaxPool2D(pool_size=(2, 2), strides=3),
+        BatchNormalization(),
 
-        Conv2D(filters=32, kernel_size=(2, 2), activation='tanh',
+        Conv2D(filters=1, kernel_size=(5, 1), activation='tanh',
                kernel_regularizer=regularizers.l2(1e-6), padding="same"),
 
-        MaxPool2D(pool_size=(2, 2), strides=2),
+        BatchNormalization(),
+
+        AveragePooling2D(pool_size=(2, 1), strides=1),
+
+        Dropout(0.3),
 
         Flatten(),
 
-        Dense(16, activation="elu", kernel_regularizer=regularizers.l2(1e-6)),
+        # Dense(4, activation="elu", kernel_regularizer=regularizers.l2(1e-6)),
 
         Dense(len(ACTIONS), activation="softmax")
     ])
@@ -85,7 +89,7 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
     MIT License
     Copyright (c) 2019 Mahta Mousavi
     Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
+    of this software and associated documentation physionet_dataset (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
     to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
     copies of the Software, and to permit persons to whom the Software is
@@ -109,12 +113,19 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
     # keras.backend.set_image_data_format('channels_first')
 
     model = Sequential()
-    model.add(Conv2D(Ft, (1, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1), use_bias=False))
+    model.add(Conv2D(Ft, (1, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1),
+                     use_bias=False))
     model.add(BatchNormalization(axis=1))
-    model.add(DepthwiseConv2D((Channels, 1), use_bias=False, depth_multiplier=Fs, depthwise_constraint=max_norm(1.)))
+    # Grid searching shows better results with the added tanh activation
+    # but the networks has more troubles generalizing
+    # model.add(Activation(activation="tanh"))
+
+    model.add(DepthwiseConv2D((Channels, 1), use_bias=False, depth_multiplier=Fs,
+                              depthwise_constraint=max_norm(1.)))
     model.add(BatchNormalization(axis=1))
     model.add(Lambda(lambda x: x ** 2))
     model.add(AveragePooling2D((1, Timesamples)))
+
     model.add(Dropout(dropOut))
     model.add(Flatten())
     model.add(Dense(nb_classes, activation="softmax"))

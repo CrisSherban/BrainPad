@@ -34,7 +34,7 @@ def grid_search_bandpass():
                 tmp_train_X, train_y = load_data(starting_dir="training_data", shuffle=True, balance=True)
                 tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
-                # cleaning the raw data
+                # cleaning the raw personal_dataset
                 train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=l, highcut=h, coi3order=c)
                 validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=l, highcut=h, coi3order=c)
 
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     print("loading validation_data")
     tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
-    # cleaning the raw data
+    # cleaning the raw personal_dataset
     train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X)
     validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X)
 
@@ -138,5 +138,3 @@ if __name__ == '__main__':
     tuner = pickle.load(open("tuner.pkl", "rb"))
     print(tuner.get_best_hyperparameters()[0].values)
     tuner.results_summary()
-
-    # grid_search_bandpass()

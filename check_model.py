@@ -7,10 +7,13 @@ import keras
 
 
 def evaluate_model(untouched_X, untouched_y, model_path):
+    # huge thanks to @Sentdex for the inspiration:
+    # https://github.com/Sentdex/BCI
+
     """
         This function creates the confusion matrix with matplotlib for
         a graphical illustration
-    :param untouched_X: ndarray, data not touched by the model
+    :param untouched_X: ndarray, personal_dataset not touched by the model
     :param untouched_y: ndarray, label
     :param model_path: string, path of the previously saved model
     :return:    Scalar test loss (if the model has a single output and no metrics)
@@ -57,18 +60,21 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    tmp_untouched_X, untouched_y = load_data(starting_dir="validation_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
 
-    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=11.2, highcut=41, coi3order=1)
+    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=12, highcut=35, coi3order=1)
     untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/74.67-332epoch-1601635685-loss-0.63.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/85.0-473epoch-1601802855-loss-0.44.model')
     print("Accuracy on Untouched Data: ", score[1])
 
-    # also try out: models/80.0-77epoch-1601401377-loss-0.53.model
+    # models/77.33-184epoch-1601636305-loss-0.56.model
+    # models/75.33-203epoch-1601636715-loss-0.58.model
+    # models/78.0-225epoch-1601636728-loss-0.59.model
+    # models/77.33-344epoch-1601636821-loss-0.59.model
 
-    # the best: conv kernel(3, def), lowcut=11.3, highcut=30.0,
-    # models/76.67-98epoch-1601507713-loss-0.58.model
+    # default parameters + 700 epochs models/79.41-597epoch-1601755511-loss-0.54.model
+    # default prameters + 800 epochs models/82.35-682epoch-1601755649-loss-0.55.model
 
-    # the best 2: conv kernel(8, def), lowcut=11.3, highcut=30.0,
-    # models/78.33-97epoch-1601508005-loss-0.68.model
+    # another good models/81.25-254epoch-1601756450-loss-0.42.model
+    # models/85.42-281epoch-1601757813-loss-0.41.model'

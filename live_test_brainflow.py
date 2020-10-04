@@ -3,7 +3,7 @@
 
 from brainflow import BoardShim, BrainFlowInputParams, BoardIds
 from matplotlib import pyplot as plt
-from timeit import default_number as timer
+from timeit import default_timer as timer
 from dataset_tools import ACTIONS, preprocess_raw_eeg
 
 import numpy as np
@@ -43,16 +43,18 @@ class GraphicalInterface:
 #############################################################
 
 def acquire_signals():
+    count = 0
     while True:
         with mutex:
             # print("acquisition_phase")
-
-            board.start_stream()  # use this for default options
-            time.sleep(0.2)
-            # get_current_board_data does not remove data from board internal buffer
-            # thus allowing us to acquire overlapped data and compute more classification over 1 sec
+            if count == 0:
+                time.sleep(2)
+                count += 1
+            else:
+                time.sleep(0.1)
+            # get_current_board_data does not remove personal_dataset from board internal buffer
+            # thus allowing us to acquire overlapped personal_dataset and compute more classification over 1 sec
             data = board.get_current_board_data(250)
-            board.stop_stream()
 
             sample = []
             eeg_channels = BoardShim.get_eeg_channels(BoardIds.CYTON_BOARD.value)
@@ -61,19 +63,23 @@ def acquire_signals():
 
             shared_vars.sample = np.array(sample)
 
+            # print(shared_vars.sample.shape)
+
             if shared_vars.key == ord("q"):
                 break
 
             # print("sample_acquired")
+        time.sleep(0.1)
 
 
 def compute_signals():
-    MODEL_NAME = "models/100.0-1epoch-1600593706-loss-0.0.model"
+    MODEL_NAME = "models/75.33-589epoch-1601640139-loss-0.57.model"
     model = keras.models.load_model(MODEL_NAME)
-    count_down = 40  # restarts the GUI when reaches 0
-    EMA = np.zeros(-1)  # exponential moving average over the probabilities of the model
-    alpha = 0.3  # coefficient for the EMA
+    count_down = 100  # restarts the GUI when reaches 0
+    EMA = [-1, -1, -1]  # exponential moving average over the probabilities of the model
+    alpha = 0.2  # coefficient for the EMA
     gui = GraphicalInterface()
+    first_run = True
 
     while True:
         with mutex:
@@ -81,14 +87,15 @@ def compute_signals():
 
             if count_down == 0:
                 gui = GraphicalInterface()
-                count_down = 40
+                count_down = 100
 
             env = np.zeros((gui.WIDTH, gui.HEIGHT, 3))
 
             # prediction on the task
-            nn_input = preprocess_raw_eeg(shared_vars.sample, fs=250, lowcut=11.2, highcut=41, coi3order=1)
-            nn_input = nn_input.reshape(1, 8, 250, 1)  # 4D Tensor
-            nn_out = model.predict(nn_input)
+            nn_input, ffts = preprocess_raw_eeg(shared_vars.sample.reshape((1, 8, 250)),
+                                                fs=250, lowcut=11.2, highcut=41, coi3order=1)
+            nn_input = nn_input.reshape((1, 8, 250, 1))  # 4D Tensor
+            nn_out = model.predict(nn_input)[0]  # this is a probability array
 
             # computing exponential moving average
             if EMA[0] == -1:  # if this is the first iteration (base case)
@@ -96,19 +103,46 @@ def compute_signals():
                     EMA[i] = nn_out[i]
             else:
                 for i in range(len(EMA)):
-                    EMA[i] = alpha * nn_out[i] + (1 - alpha) * EMA[i]
+                    if i == 2:
+                        mod = nn_out[i] + 0.41
+                        if mod > 1:
+                            mod = 1
+                        EMA[i] = alpha * mod + (1 - alpha) * EMA[i]
+                    elif i == 0:
+                        mod = nn_out[i] - 0.2
+                        if mod < 0:
+                            mod = 0
+                        EMA[i] = alpha * mod + (1 - alpha) * EMA[i]
+                    else:
+                        EMA[i] = alpha * nn_out[i] + (1 - alpha) * EMA[i]
+
+            print(EMA)
 
             predicted_action = ACTIONS[np.argmax(EMA)]
 
-            if EMA[np.argmax(EMA)] > 0.7:  # only choosing confident predictions
-                if predicted_action == "hands":
+            if EMA[int(np.argmax(EMA))] > 0.45:
+                if predicted_action == "feet":
                     gui.square['y1'] += gui.MOVE_SPEED
                     gui.square['y2'] += gui.MOVE_SPEED
-                elif predicted_action == "feet":
+
+                elif predicted_action == "hands":
                     gui.square['y1'] -= gui.MOVE_SPEED
                     gui.square['y2'] -= gui.MOVE_SPEED
 
-                count_down -= 1
+                print(predicted_action)
+
+            '''
+            elif EMA[int(np.argmax(EMA))] > 0.6:  # only choosing confident prediction
+                if predicted_action == "hands" and EMA[(np.argmax(EMA) + 1) % len(EMA)] < 0.5 \
+                        and EMA[(np.argmax(EMA) + 2) % len(EMA)] < 0.5:
+                    gui.square['y1'] -= gui.MOVE_SPEED
+                    gui.square['y2'] -= gui.MOVE_SPEED
+                elif predicted_action == "feet" and EMA[(np.argmax(EMA) + 1) % len(EMA)] < 0.4 \
+                        and EMA[(np.argmax(EMA) + 2) % len(EMA)] < 0.4:
+                    gui.square['y1'] += gui.MOVE_SPEED
+                    gui.square['y2'] += gui.MOVE_SPEED'''
+
+            count_down -= 1
 
             env[:, gui.HEIGHT // 2 - 5:gui.HEIGHT // 2 + 5, :] = gui.horizontal_line
             env[gui.WIDTH // 2 - 5:gui.WIDTH // 2 + 5, :, :] = gui.vertical_line
@@ -116,16 +150,20 @@ def compute_signals():
 
             cv2.imshow('', env)
 
-            end = timer()
-            print("\rFPS: ", 1 // (end - start), end='')
-            start = timer()
+            if first_run:
+                first_run = False
+                start = timer()
+            else:
+                end = timer()
+                print("\rFPS: ", 1 // (end - start), " ", end='')
+                start = timer()
 
             shared_vars.key = cv2.waitKey(1) & 0xFF
             if shared_vars.key == ord("q"):
                 cv2.destroyAllWindows()
                 break
 
-            # time.sleep(0.3)
+        # time.sleep(0.1)
 
 
 #############################################################
@@ -150,6 +188,8 @@ if __name__ == '__main__':
     shared_vars = Shared()
     mutex = threading.Lock()
 
+    board.start_stream()  # use this for default options
+
     acquisition = threading.Thread(target=acquire_signals)
     acquisition.start()
     computing = threading.Thread(target=compute_signals)
@@ -157,3 +197,4 @@ if __name__ == '__main__':
 
     acquisition.join()
     computing.join()
+    board.stop_stream()

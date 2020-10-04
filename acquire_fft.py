@@ -91,7 +91,7 @@ def save_sample(mutex, pool, shared_vars):
             if not os.path.exists(actiondir):
                 os.mkdir(actiondir)
 
-            print(f"saving {shared_vars.action} data...")
+            print(f"saving {shared_vars.action} personal_dataset...")
             np.save(os.path.join(actiondir, f"{int(time.time())}.npy"),
                     np.array(shared_vars.sample).reshape((NUM_CHANNELS, MAX_FREQ * ACQUISITIONS_PER_SAMPLE)))
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     ACQUISITIONS_PER_SAMPLE = 10
     MAX_FREQ = 80
 
-    datadir = "data"
+    datadir = "personal_dataset"
     if not os.path.exists(datadir):
         os.mkdir(datadir)
 

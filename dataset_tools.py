@@ -7,23 +7,23 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["feet", "none", "hands"]
+ACTIONS = ["feet", "hands"]
 
 
-def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
+def split_data(starting_dir="personal_dataset", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
 
     :param starting_dir: string, the directory of the dataset
     :param splitting_percentage:  tuple, (training_percentage, validation_percentage, untouched_percentage)
-    :param shuffle: bool, decides if the data will be shuffled
-    :param division_factor: int, if the data used is made of FFTs which are taken from multiple sittings
-                                one sample might be very similar to an adjacent one, so not all the samples
-                                should be considered because some very similar samples could fall both in
-                                validation and training, thus the division_factor divides the data.
-                                if division_factor == 0 the function will maintain all the data
+    :param shuffle: bool, decides if the personal_dataset will be shuffled
     :param coupling: bool, decides if samples are shuffled singularly or by couples
+    :param division_factor: int, if the personal_dataset used is made of FFTs which are taken from multiple sittings
+                            one sample might be very similar to an adjacent one, so not all the samples
+                            should be considered because some very similar samples could fall both in
+                            validation and training, thus the division_factor divides the personal_dataset.
+                            if division_factor == 0 the function will maintain all the personal_dataset
 
     """
     training_per, validation_per, untouched_per = splitting_percentage
@@ -44,7 +44,7 @@ def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=Tr
             # this will contain all the samples relative to the action
 
             data_dir = os.path.join(starting_dir, action)
-            # sorted will make sure that the data is appended in the order of acquisition
+            # sorted will make sure that the personal_dataset is appended in the order of acquisition
             # since each sample file is saved as "timestamp".npy
             for file in sorted(os.listdir(data_dir)):
                 # each item is a ndarray of shape (8, 90) that represents ≈1sec of acquisition
@@ -120,11 +120,11 @@ def split_data(starting_dir="data", splitting_percentage=(75, 25, 0), shuffle=Tr
 
 def load_data(starting_dir, shuffle=True, balance=False):
     """
-        This function loads the data from a directory where the classes
+        This function loads the personal_dataset from a directory where the classes
         have been split into different folders where each file is a sample
 
-    :param starting_dir: the path of the data you want to load
-    :param shuffle: bool, decides if the data will be shuffled
+    :param starting_dir: the path of the personal_dataset you want to load
+    :param shuffle: bool, decides if the personal_dataset will be shuffled
     :param balance: bool, decides if samples should be equal in cardinality between classes
     :return: X, y: both python lists
     """
@@ -147,7 +147,7 @@ def load_data(starting_dir, shuffle=True, balance=False):
         lengths = [len(data[i]) for i in range(len(ACTIONS))]
         print(lengths)
 
-    # this is needed to shuffle the data between classes, so the model
+    # this is needed to shuffle the personal_dataset between classes, so the model
     # won't train first on one single class and then pass to the next one
     # but it trains on all classes "simultaneously"
     combined_data = []
@@ -204,8 +204,8 @@ def standardize(data, std_type="channel_wise"):
 
 
 def visualize_data(data, file_name, title, length):
-    # takes a look at the data
-    for i in range(8):
+    # takes a look at the personal_dataset
+    for i in range(len(data[0])):
         plt.plot(np.arange(len(data[0][i])), data[0][i].reshape(length))
 
     plt.title(title)
@@ -229,7 +229,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
 
 def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, power_hz=50, coi3order=3):
     """
-        Processes raw EEG data, filters 50Hz noise from electronics in EU, applies bandpass
+        Processes raw EEG personal_dataset, filters 50Hz noise from electronics in EU, applies bandpass
         and wavelet denoising.
         Change power_hz to 60Hz if you are in the US
         Check local power line frequency otherwise
@@ -238,35 +238,35 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, powe
     :param lowcut: float, lower extreme for the bandpass filter
     :param highcut: float, higher extreme for the bandpass filter
     :param MAX_FREQ: int, maximum frequency for the FFTs
-    :return: tuple, (ndarray, ndarray), process data and FFTs respectively
+    :return: tuple, (ndarray, ndarray), process personal_dataset and FFTs respectively
     """
-    # print(data.shape)
-    # visualize_data(data,
+    # print(personal_dataset.shape)
+    # visualize_data(personal_dataset,
     #               file_name="pictures/before",
     #               title="RAW EEGs",
-    #               length=len(data[0, 0]))
+    #               length=len(personal_dataset[0, 0]))
 
     data = standardize(data)
 
-    # visualize_data(data,
+    # visualize_data(personal_dataset,
     #               file_name="pictures/after_std",
     #               title="After Standardization",
-    #               length=len(data[0, 0]))
+    #               length=len(personal_dataset[0, 0]))
 
     fft_data = np.zeros((len(data), len(data[0]), MAX_FREQ))
 
     for sample in range(len(data)):
         for channel in range(len(data[0])):
-            DataFilter.perform_bandstop(data[sample][channel], 250, power_hz, 2.0, 5,
-                                        FilterTypes.BUTTERWORTH.value, 0)
-            data[sample][channel] = butter_bandpass_filter(data[sample][channel],
-                                                           2, 80, fs, order=5)
-            DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', coi3order)
-            data[sample][channel] = butter_bandpass_filter(data[sample][channel],
-                                                           lowcut, highcut, fs, order=5)
+            DataFilter.perform_bandstop(data[sample][channel], 250, power_hz, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
+            data[sample][channel] = butter_bandpass_filter(data[sample][channel], 2, 120, fs, order=5)
 
-            # DataFilter.perform_wavelet_denoising(data[sample][channel], 'db6', 3)
-            # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
+            # DataFilter.perform_bandstop(personal_dataset[sample][channel], 250, 10.0, 1.0, 6, FilterTypes.BUTTERWORTH.value, 0)
+            # DataFilter.perform_wavelet_denoising(personal_dataset[sample][channel], 'coif3', coi3order)
+
+            data[sample][channel] = butter_bandpass_filter(data[sample][channel], lowcut, highcut, fs, order=5)
+
+            # DataFilter.perform_wavelet_denoising(personal_dataset[sample][channel], 'db6', 3)
+            # DataFilter.perform_rolling_filter(personal_dataset[sample][channel], 3, AggOperations.MEAN.value)
 
             fft_data[sample][channel] = np.abs(fft(data[sample][channel])[:MAX_FREQ])
 
@@ -305,7 +305,7 @@ def check_duplicate(train_X, test_X):
                 print(green("\nYou're good to go, no duplication in the splits"))
                 return True
     print("\nComputing: 100%")
-    print(red("You have duplicated data in the splits !!!"))
+    print(red("You have duplicated personal_dataset in the splits !!!"))
     print(red("Check the splitting procedure"))
     return False
 

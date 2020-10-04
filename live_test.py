@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 # DEPRECATED: USE live_test_brainflow.py
 # this will become an FFT version for another model
 
-# The usage of 2 threads is required if continuous data flow from the
+# The usage of 2 threads is required if continuous personal_dataset flow from the
 # LSL StreamInlet is wanted, so the threads can be timed without interfering with the StreamInlet
 # TODO : find out if timing the threads is actually necessary
 
