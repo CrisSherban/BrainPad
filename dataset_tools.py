@@ -7,10 +7,11 @@ from colors import red, green
 import numpy as np
 import os
 
-ACTIONS = ["feet", "hands"]
+ACTIONS = ["feet", "none", "hands"]
 
 
-def split_data(starting_dir="personal_dataset", splitting_percentage=(75, 25, 0), shuffle=True, coupling=False, division_factor=0):
+def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False,
+               division_factor=0):
     """
         This function splits the dataset in three folders, training, validation, untouched
         Has to be run just everytime the dataset is changed
@@ -241,14 +242,14 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, powe
     :return: tuple, (ndarray, ndarray), process personal_dataset and FFTs respectively
     """
     # print(personal_dataset.shape)
-    # visualize_data(personal_dataset,
+    # visualize_data(data,
     #               file_name="pictures/before",
     #               title="RAW EEGs",
     #               length=len(personal_dataset[0, 0]))
 
     data = standardize(data)
 
-    # visualize_data(personal_dataset,
+    # visualize_data(data,
     #               file_name="pictures/after_std",
     #               title="After Standardization",
     #               length=len(personal_dataset[0, 0]))
@@ -260,13 +261,14 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, powe
             DataFilter.perform_bandstop(data[sample][channel], 250, power_hz, 2.0, 5, FilterTypes.BUTTERWORTH.value, 0)
             data[sample][channel] = butter_bandpass_filter(data[sample][channel], 2, 120, fs, order=5)
 
-            # DataFilter.perform_bandstop(personal_dataset[sample][channel], 250, 10.0, 1.0, 6, FilterTypes.BUTTERWORTH.value, 0)
-            # DataFilter.perform_wavelet_denoising(personal_dataset[sample][channel], 'coif3', coi3order)
+            # DataFilter.perform_bandstop(data[sample][channel], 250, 10.0, 1.0, 6, FilterTypes.BUTTERWORTH.value, 0)
+            if coi3order != 0:
+                DataFilter.perform_wavelet_denoising(data[sample][channel], 'coif3', coi3order)
 
             data[sample][channel] = butter_bandpass_filter(data[sample][channel], lowcut, highcut, fs, order=5)
 
-            # DataFilter.perform_wavelet_denoising(personal_dataset[sample][channel], 'db6', 3)
-            # DataFilter.perform_rolling_filter(personal_dataset[sample][channel], 3, AggOperations.MEAN.value)
+            # DataFilter.perform_wavelet_denoising(data[sample][channel], 'db6', 3)
+            # DataFilter.perform_rolling_filter(data[sample][channel], 3, AggOperations.MEAN.value)
 
             fft_data[sample][channel] = np.abs(fft(data[sample][channel])[:MAX_FREQ])
 

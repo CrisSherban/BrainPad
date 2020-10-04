@@ -8,7 +8,7 @@
 # https://github.com/spolsley/common-spatial-patterns
 
 from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg, ACTIONS
-from neural_nets import cris_net, res_net, TA_CSPNN
+from neural_nets import cris_net, res_net, TA_CSPNN, EEGNet
 
 from sklearn.model_selection import KFold, cross_val_score
 from matplotlib import pyplot as plt
@@ -40,7 +40,7 @@ def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, ba
 
         MODEL_NAME = f"models/{round(score * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss, 2)}.model"
 
-        if round(score * 100, 2) >= 84 and round(history.history["accuracy"][-1] * 100, 2) >= 85:
+        if 77 <= round(score * 100, 2) <= 80 and round(history.history["accuracy"][-1] * 100, 2) >= 78:
             # saving & plotting only relevant models
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
@@ -154,10 +154,10 @@ def main():
     tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
     # cleaning the raw personal_dataset
-    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=12, highcut=35, coi3order=1)
-    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=12, highcut=35, coi3order=1)
+    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=7, highcut=45, coi3order=0)
+    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=7, highcut=45, coi3order=0)
 
-    check_other_classifiers(train_X, train_y, validation_X, validation_y)
+    # check_other_classifiers(train_X, train_y, validation_X, validation_y)
 
     # reshaping
     train_X = train_X.reshape((len(train_X), len(train_X[0]), len(train_X[0, 0]), 1))
@@ -178,8 +178,10 @@ def main():
 
     print("train_X shape: ", train_X.shape)
 
-    model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=len(train_X[0]),
-                     timeKernelLen=50, dropOut=0.25, Ft=11, Fs=6)
+    # model = TA_CSPNN(nb_classes=len(ACTIONS), Timesamples=250, Channels=len(train_X[0]),
+    #                timeKernelLen=50, dropOut=0.3, Ft=11, Fs=6)
+
+    model = EEGNet(nb_classes=len(ACTIONS))
     # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
     model.compile(loss='categorical_crossentropy',
