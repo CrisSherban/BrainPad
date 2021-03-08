@@ -2,8 +2,8 @@
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
 
 <div>
-    <img src="pictures/helmet.jpg" style="float:left">
-    <img src="pictures/demo.gif" width="350">
+    <img src="pictures/helmet.jpg" style="float:left; max-width: 70%">
+    <img src="pictures/demo.gif" width="350" style="max-width: 30%">
 </div>
 
 
