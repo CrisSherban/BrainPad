@@ -2,6 +2,10 @@
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
 <img src="pictures/helmet.jpg">
 
+<video width="320" height="240" autoplay muted>
+    <source src="pictures/compressed_demo.mp4" type="video/mp4">
+</video>
+
 ## Data Acquisition:
 The "data" folder provides the current EEG samples taken following this protocol:<br>
 The person sits in a comfortable position on a chair and follows the `acquire_eeg.py`
