@@ -1,7 +1,7 @@
 # BrainPad
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
 
-![Helmet](pictures/helmet.jpg =300x) ![Demo](pictures/demo.gif =300x)
+![Helmet](pictures/helmet.jpg) ![Demo](pictures/demo.gif)
 ## Data Acquisition:
 The "data" folder provides the current EEG samples taken following this protocol:<br>
 The person sits in a comfortable position on a chair and follows the `acquire_eeg.py`
