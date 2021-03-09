@@ -2,10 +2,10 @@
 Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
 
 <p align='center'>
-  <img src="pictures/helmet_orig.jpg" width="500" />
+  <img src="pictures/helmet_orig.jpg" width="600" />
 </p>
 <p align='center'>
-  <img src="pictures/demo.gif" width="500" /> 
+  <img src="pictures/demo_resized.gif.gif" width="400" /> 
 </p>
 
 
@@ -66,16 +66,23 @@ Each sample is stored as a numpy 2D array in an .npy file that has the following
      <br> https://ieeexplore.ieee.org/document/8857423
     
 ## Confusion Matrix so far:
+<p align='center'>
 <img src="pictures/confusion_matrix.png">
 
 ## A look at our samples:
+<p align='center'>
 <img src="pictures/before.png">
 <img src="pictures/after_std.png">
 <img src="pictures/after_bandpass.png">
 <img src="pictures/ffts.png">
+</p>
 
 ## How the crisnet model sees data:
+<p align='center'>
 <img src="pictures/how_model_sees.png">
+</p>
 
 ## The Best Neural Network so far:
+<p align='center'>
 <img src="pictures/net.png">
+</p>
