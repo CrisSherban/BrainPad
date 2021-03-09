@@ -5,7 +5,7 @@ Classification of EEG signals form the brain through OpenBCI hardware and Tensor
   <img src="pictures/helmet_orig.jpg" width="600" />
 </p>
 <p align='center'>
-  <img src="pictures/demo_resized.gif" width="400" /> 
+  <img src="pictures/short_demo.gif" width="400" /> 
 </p>
 
 
