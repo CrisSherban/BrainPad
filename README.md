@@ -1,5 +1,5 @@
 # BrainPad
-Classification of EEG signals form the brain through OpenBCI hardware and Tensorflow-Keras API
+Classification of EEG signals from the brain through OpenBCI hardware and Tensorflow-Keras API
 
 <p align='center'>
   <img src="pictures/helmet_orig.jpg" />
