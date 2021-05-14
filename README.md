@@ -1,4 +1,7 @@
 # BrainPad
+
+![](pictures/logo_large.png "Logo")
+
 Classification of EEG signals from the brain through OpenBCI hardware and Tensorflow-Keras API
 
 <p align='center'>
