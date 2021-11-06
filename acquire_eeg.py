@@ -87,11 +87,18 @@ if __name__ == '__main__':
         for channel in eeg_channels:
             sample.append(data[channel])
 
+        if i == 0:
+            for j in range(8):
+                plt.plot(np.arange(len(sample[j])), sample[j])
+                plt.show()
+                plt.clf()
+
         print(np.array(sample).shape)
         for j in range(7, 8):
             plt.plot(np.arange(len(sample[j])), sample[j])
         plt.show()
 
-        save_sample(np.array(sample), ACTIONS[last_act])
+        if i != 0:
+            save_sample(np.array(sample), ACTIONS[last_act])
 
     board.release_session()

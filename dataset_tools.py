@@ -2,12 +2,11 @@ from brainflow import DataFilter, FilterTypes, AggOperations
 from scipy.signal import butter, lfilter
 from matplotlib import pyplot as plt
 from scipy.fft import fft
-from colors import red, green
 
 import numpy as np
 import os
 
-ACTIONS = ["feet","none", "hands"]
+ACTIONS = ["feet", "none", "hands"]
 
 
 def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False,
@@ -52,6 +51,8 @@ def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10
                 all_action_data.append(np.load(os.path.join(data_dir, file)))
 
             # TODO: make this coupling part readable
+            # coupling was used when overlapping FFTs were used
+            # is now deprecated with EEG models and very time-distant acquisitions
             if coupling:
                 # coupling near time acquired samples to reduce the probability of having
                 # similar samples in both train and validation sets
@@ -283,7 +284,7 @@ def preprocess_raw_eeg(data, fs=250, lowcut=2.0, highcut=65.0, MAX_FREQ=60, powe
     #               title="FFTs",
     #               length=len(fft_data[0, 0]))
 
-    return data, fft_data
+    return np.array(data), np.array(fft_data)
 
 
 def check_duplicate(train_X, test_X):
@@ -304,11 +305,11 @@ def check_duplicate(train_X, test_X):
             print("\rComputing: " + str(int(i * 100 / len(tmp_train))) + "%", end='')
         for j in range(len(tmp_test)):
             if np.array_equiv(tmp_train[i, 0], tmp_test[j, 0]):
-                print(green("\nYou're good to go, no duplication in the splits"))
+                print("\nYou're good to go, no duplication in the splits")
                 return True
     print("\nComputing: 100%")
-    print(red("You have duplicated personal_dataset in the splits !!!"))
-    print(red("Check the splitting procedure"))
+    print("You have duplicated personal_dataset in the splits !!!")
+    print("Check the splitting procedure")
     return False
 
 

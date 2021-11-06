@@ -7,13 +7,10 @@ import keras
 
 
 def evaluate_model(untouched_X, untouched_y, model_path):
-    # huge thanks to @Sentdex for the inspiration:
-    # https://github.com/Sentdex/BCI
-
     """
         This function creates the confusion matrix with matplotlib for
         a graphical illustration
-    :param untouched_X: ndarray, personal_dataset not touched by the model
+    :param untouched_X: ndarray, data not touched by the model
     :param untouched_y: ndarray, label
     :param model_path: string, path of the previously saved model
     :return:    Scalar test loss (if the model has a single output and no metrics)
@@ -60,12 +57,12 @@ def evaluate_model(untouched_X, untouched_y, model_path):
 
 
 if __name__ == "__main__":
-    tmp_untouched_X, untouched_y = load_data(starting_dir="untouched_data")
+    tmp_untouched_X, untouched_y = load_data(starting_dir="validation_data")
 
-    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=8, highcut=45, coi3order=0)
+    untouched_X, fft_untouched_X = preprocess_raw_eeg(tmp_untouched_X, lowcut=7, highcut=45, coi3order=0)
     untouched_X = untouched_X.reshape((len(untouched_X), len(untouched_X[0]), len(untouched_X[0, 0]), 1))
 
-    score = evaluate_model(untouched_X, untouched_y, 'models/73.75-230epoch-1601815738-loss-0.6.model')
+    score = evaluate_model(untouched_X, untouched_y, 'models/80.83-140epoch-1601830818-loss-0.51.model')
     print("Accuracy on Untouched Data: ", score[1])
 
     # models/77.33-184epoch-1601636305-loss-0.56.model

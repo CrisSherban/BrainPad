@@ -7,20 +7,24 @@
 # another python implementation of CSP can be found here:
 # https://github.com/spolsley/common-spatial-patterns
 
+
+from sklearn.model_selection import KFold
 from dataset_tools import split_data, standardize, load_data, preprocess_raw_eeg, ACTIONS
 from neural_nets import cris_net, res_net, TA_CSPNN, EEGNet
 
 from sklearn.model_selection import KFold, cross_val_score
 from matplotlib import pyplot as plt
+
 import numpy as np
-import keras
+from tensorflow import keras
+import tensorflow as tf
 import time
 
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # shuts down GPU
 
-# print(tf.__version__)
-# print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU'))
+print(tf.__version__)
+print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
 def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size):
     # fits the network epoch by epoch and saves only accurate models
@@ -34,13 +38,13 @@ def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, ba
                             validation_data=(validation_X, validation_y))
 
         val_loss = history.history["val_loss"][-1]
-        score = history.history["val_accuracy"][-1]
+        score = history.history["val_acc"][-1]
         val_acc.append(score)
-        acc.append(history.history["accuracy"][-1])
+        acc.append(history.history["acc"][-1])
 
         MODEL_NAME = f"models/{round(score * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss, 2)}.model"
 
-        if  round(score * 100, 4) >= 81 and round(history.history["accuracy"][-1] * 100, 4) >= 81:
+        if round(score * 100, 4) >= 77 and round(history.history["acc"][-1] * 100, 4) >= 77:
             # saving & plotting only relevant models
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
@@ -130,19 +134,20 @@ def check_other_classifiers(train_X, train_y, test_X, test_y):
     df = pd.DataFrame(data=mdm.covmeans_[0], index=ch_names, columns=ch_names)
     g = sns.heatmap(
         df, ax=axes[0], square=True, cbar=False, xticklabels=2, yticklabels=2)
-    g.set_title('Mean covariance - hands')
+    g.set_title('Mean covariance - feet')
 
     df = pd.DataFrame(data=mdm.covmeans_[1], index=ch_names, columns=ch_names)
     g = sns.heatmap(
         df, ax=axes[1], square=True, cbar=False, xticklabels=2, yticklabels=2)
     plt.xticks(rotation='vertical')
     plt.yticks(rotation='horizontal')
-    g.set_title('Mean covariance - feets')
+    g.set_title('Mean covariance - hands')
 
     # dirty fix
     plt.sca(axes[0])
     plt.xticks(rotation='vertical')
     plt.yticks(rotation='horizontal')
+    plt.savefig("meancovmat.png")
     plt.show()
 
 
@@ -154,8 +159,8 @@ def main():
     tmp_validation_X, validation_y = load_data(starting_dir="validation_data", shuffle=True, balance=True)
 
     # cleaning the raw personal_dataset
-    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=8, highcut=45, coi3order=0)
-    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=8, highcut=45, coi3order=0)
+    train_X, fft_train_X = preprocess_raw_eeg(tmp_train_X, lowcut=7, highcut=45, coi3order=0)
+    validation_X, fft_validation_X = preprocess_raw_eeg(tmp_validation_X, lowcut=7, highcut=45, coi3order=0)
 
     # check_other_classifiers(train_X, train_y, validation_X, validation_y)
 
@@ -190,8 +195,8 @@ def main():
 
     keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
-    batch_size = 16
-    epochs = 700
+    batch_size = 50
+    epochs = 70
 
     # kfold_cross_val(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
     fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)

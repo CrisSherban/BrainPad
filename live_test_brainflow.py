@@ -23,7 +23,7 @@ class Shared:
 
 class GraphicalInterface:
     # huge thanks for the GUI to @Sentdex: https://github.com/Sentdex/BCI
-    def __init__(self, WIDTH=500, HEIGHT=500, SQ_SIZE=40, MOVE_SPEED=2):
+    def __init__(self, WIDTH=500, HEIGHT=500, SQ_SIZE=40, MOVE_SPEED=5):
         self.WIDTH = WIDTH
         self.HEIGHT = HEIGHT
         self.SQ_SIZE = SQ_SIZE
@@ -50,8 +50,8 @@ def acquire_signals():
             if count == 0:
                 time.sleep(2)
                 count += 1
-            else:
-                time.sleep(0.1)
+            # else:
+                time.sleep(0.5)
             # get_current_board_data does not remove personal_dataset from board internal buffer
             # thus allowing us to acquire overlapped personal_dataset and compute more classification over 1 sec
             data = board.get_current_board_data(250)
@@ -73,11 +73,11 @@ def acquire_signals():
 
 
 def compute_signals():
-    MODEL_NAME = "models/75.33-589epoch-1601640139-loss-0.57.model"
+    MODEL_NAME = "models/80.83-140epoch-1601830818-loss-0.51.model"
     model = keras.models.load_model(MODEL_NAME)
     count_down = 100  # restarts the GUI when reaches 0
     EMA = [-1, -1, -1]  # exponential moving average over the probabilities of the model
-    alpha = 0.2  # coefficient for the EMA
+    alpha = 0.4  # coefficient for the EMA
     gui = GraphicalInterface()
     first_run = True
 
@@ -93,7 +93,7 @@ def compute_signals():
 
             # prediction on the task
             nn_input, ffts = preprocess_raw_eeg(shared_vars.sample.reshape((1, 8, 250)),
-                                                fs=250, lowcut=11.2, highcut=41, coi3order=1)
+                                                fs=250, lowcut=7, highcut=45, coi3order=0)
             nn_input = nn_input.reshape((1, 8, 250, 1))  # 4D Tensor
             nn_out = model.predict(nn_input)[0]  # this is a probability array
 
@@ -104,23 +104,17 @@ def compute_signals():
             else:
                 for i in range(len(EMA)):
                     if i == 2:
-                        mod = nn_out[i] + 0.41
+                        mod = nn_out[i] + 0.18
                         if mod > 1:
                             mod = 1
-                        EMA[i] = alpha * mod + (1 - alpha) * EMA[i]
-                    elif i == 0:
-                        mod = nn_out[i] - 0.2
-                        if mod < 0:
-                            mod = 0
                         EMA[i] = alpha * mod + (1 - alpha) * EMA[i]
                     else:
                         EMA[i] = alpha * nn_out[i] + (1 - alpha) * EMA[i]
 
             print(EMA)
-
             predicted_action = ACTIONS[np.argmax(EMA)]
 
-            if EMA[int(np.argmax(EMA))] > 0.45:
+            if EMA[int(np.argmax(EMA))] > 0.50:
                 if predicted_action == "feet":
                     gui.square['y1'] += gui.MOVE_SPEED
                     gui.square['y2'] += gui.MOVE_SPEED
@@ -197,4 +191,5 @@ if __name__ == '__main__':
 
     acquisition.join()
     computing.join()
+    board.stop_stream()
     board.stop_stream()

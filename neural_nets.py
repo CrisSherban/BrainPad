@@ -1,13 +1,13 @@
-from keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
-from keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D, \
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Input, DepthwiseConv2D
+from tensorflow.keras.layers import Conv2D, BatchNormalization, MaxPooling2D, MaxPool2D, \
     Lambda, AveragePooling2D, TimeDistributed, ConvLSTM2D, Reshape, SpatialDropout2D, SeparableConv2D
-from keras import regularizers, Model
-from keras.constraints import max_norm
-from keras.models import Sequential
+from tensorflow.keras import regularizers, Model
+from tensorflow.keras.constraints import max_norm
+from tensorflow.keras.models import Sequential
 from dataset_tools import ACTIONS
 
 import tensorflow as tf
-import keras.backend
+import tensorflow.keras.backend
 
 stride = 1
 CHANNEL_AXIS = 1
@@ -22,7 +22,7 @@ def res_net():
         temp = Activation("relu")(temp)
         temp = Conv2D(filters, (3, 3), strides=stride, padding="same")(temp)
 
-        x = tf.keras.layers.add([temp, Conv2D(filters, (3, 3), strides=stride, padding="same")(x)])
+        x = tf.tensorflow.keras.layers.add([temp, Conv2D(filters, (3, 3), strides=stride, padding="same")(x)])
         if pooling:
             x = MaxPooling2D((2, 2))(x)
         if dropout != 0.0:
@@ -31,7 +31,7 @@ def res_net():
         x = Activation("relu")(x)
         return x
 
-    inp = tf.keras.Input(shape=(8, 90, 1))
+    inp = tf.tensorflow.keras.Input(shape=(8, 90, 1))
     x = Conv2D(16, (3, 3), strides=stride, padding="same")(inp)
     x = BatchNormalization(axis=CHANNEL_AXIS)(x)
     x = Activation("relu")(x)
@@ -47,7 +47,7 @@ def res_net():
     x = Dropout(0.23)(x)
     x = Dense(len(ACTIONS), activation="softmax")(x)
 
-    model = tf.keras.Model(inp, x, name="Resnet")
+    model = tf.tensorflow.keras.Model(inp, x, name="Resnet")
     return model
 
 
@@ -67,9 +67,7 @@ def cris_net(input_shape):
 
         BatchNormalization(),
 
-        AveragePooling2D(pool_size=(2, 1), strides=1),
-
-        Dropout(0.3),
+        MaxPooling2D(pool_size=(2, 1), strides=1),
 
         Flatten(),
 
@@ -110,7 +108,7 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
     # input (trials, 1, number of channels, number of time samples)
 
     # if you want channels first notation:
-    # keras.backend.set_image_data_format('channels_first')
+    # tensorflow.keras.backend.set_image_data_format('channels_first')
 
     model = Sequential()
     model.add(Conv2D(Ft, (1, timeKernelLen), padding='same', input_shape=(Channels, Timesamples, 1),
@@ -134,9 +132,9 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
 
 
 def EEGNet(nb_classes, Chans=8, Samples=250,
-           dropoutRate=0.5, kernLength=125, F1=7,
-           D=2, F2=7, norm_rate=0.25, dropoutType='Dropout'):
-    """ Keras Implementation of EEGNet
+           dropoutRate=0.5, kernLength=125, F1=8,
+           D=2, F2=8, norm_rate=0.25, dropoutType='Dropout'):
+    """ tensorflow.Keras Implementation of EEGNet
     http://iopscience.iop.org/article/10.1088/1741-2552/aace8c/meta
     Note that this implements the newest version of EEGNet and NOT the earlier
     version (version v1 and v2 on arxiv). We strongly recommend using this
