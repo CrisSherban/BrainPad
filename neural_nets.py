@@ -132,8 +132,8 @@ def TA_CSPNN(nb_classes, Channels=8, Timesamples=250,
 
 
 def EEGNet(nb_classes, Chans=8, Samples=250,
-           dropoutRate=0.5, kernLength=125, F1=8,
-           D=2, F2=8, norm_rate=0.25, dropoutType='Dropout'):
+           dropoutRate=0.5, kernLength=125, F1=7,
+           D=2, F2=7, norm_rate=0.25, dropoutType='Dropout'):
     """ tensorflow.Keras Implementation of EEGNet
     http://iopscience.iop.org/article/10.1088/1741-2552/aace8c/meta
     Note that this implements the newest version of EEGNet and NOT the earlier

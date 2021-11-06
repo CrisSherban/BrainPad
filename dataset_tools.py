@@ -12,11 +12,11 @@ ACTIONS = ["feet", "none", "hands"]
 def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10), shuffle=True, coupling=False,
                division_factor=0):
     """
-        This function splits the dataset in three folders, training, validation, untouched
+        This function splits the dataset in three folders, training, validation, test
         Has to be run just everytime the dataset is changed
 
     :param starting_dir: string, the directory of the dataset
-    :param splitting_percentage:  tuple, (training_percentage, validation_percentage, untouched_percentage)
+    :param splitting_percentage:  tuple, (training_percentage, validation_percentage, test_percentage)
     :param shuffle: bool, decides if the personal_dataset will be shuffled
     :param coupling: bool, decides if samples are shuffled singularly or by couples
     :param division_factor: int, if the personal_dataset used is made of FFTs which are taken from multiple sittings
@@ -26,16 +26,16 @@ def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10
                             if division_factor == 0 the function will maintain all the personal_dataset
 
     """
-    training_per, validation_per, untouched_per = splitting_percentage
+    training_per, validation_per, test_per = splitting_percentage
 
     if not os.path.exists("training_data") and not os.path.exists("validation_data") \
-            and not os.path.exists("untouched_data"):
+            and not os.path.exists("test_data"):
 
         # creating directories
 
         os.mkdir("training_data")
         os.mkdir("validation_data")
-        os.mkdir("untouched_data")
+        os.mkdir("test_data")
 
         for action in ACTIONS:
 
@@ -96,7 +96,7 @@ def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10
 
             num_training_samples = int(len(action_data) * training_per / 100)
             num_validation_samples = int(len(action_data) * validation_per / 100)
-            num_untouched_samples = int(len(action_data) * untouched_per / 100)
+            num_test_samples = int(len(action_data) * test_per / 100)
 
             # creating subdirectories for each action
             tmp_dir = os.path.join("training_data", action)
@@ -111,12 +111,12 @@ def split_data(starting_dir="personal_dataset", splitting_percentage=(70, 20, 10
             for sample in range(num_training_samples, num_training_samples + num_validation_samples):
                 np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
-            if untouched_per != 0:
-                tmp_dir = os.path.join("untouched_data", action)
+            if test_per != 0:
+                tmp_dir = os.path.join("test_data", action)
                 if not os.path.exists(tmp_dir):
                     os.mkdir(tmp_dir)
                 for sample in range(num_training_samples + num_validation_samples,
-                                    num_training_samples + num_validation_samples + num_untouched_samples):
+                                    num_training_samples + num_validation_samples + num_test_samples):
                     np.save(file=os.path.join(tmp_dir, str(sample)), arr=action_data[sample])
 
 

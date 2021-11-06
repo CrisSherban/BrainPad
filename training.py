@@ -15,44 +15,55 @@ from neural_nets import cris_net, res_net, TA_CSPNN, EEGNet
 from sklearn.model_selection import KFold, cross_val_score
 from matplotlib import pyplot as plt
 
-import numpy as np
 from tensorflow import keras
 import tensorflow as tf
+import numpy as np
 import time
-
 
 # os.environ["CUDA_VISIBLE_DEVICES"] = "-1" # shuts down GPU
 
 print(tf.__version__)
 print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 
+
 def fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size):
     # fits the network epoch by epoch and saves only accurate models
-    val_acc = []
-    acc = []
 
-    # saving the model one epoch at a time
+    train_loss = []
+    train_acc = []
+    val_loss = []
+    val_acc = []
+
     for epoch in range(epochs):
-        print("EPOCH: ", epoch)
         history = model.fit(train_X, train_y, epochs=1, batch_size=batch_size,
                             validation_data=(validation_X, validation_y))
 
-        val_loss = history.history["val_loss"][-1]
-        score = history.history["val_acc"][-1]
-        val_acc.append(score)
-        acc.append(history.history["acc"][-1])
+        train_acc.append(history.history["accuracy"][-1])
+        train_loss.append(history.history["loss"][-1])
+        val_acc.append(history.history["val_accuracy"][-1])
+        val_loss.append(history.history["val_loss"][-1])
 
-        MODEL_NAME = f"models/{round(score * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss, 2)}.model"
+        MODEL_NAME = f"models/{round(val_acc[-1] * 100, 2)}-{epoch}epoch-{int(time.time())}-loss-{round(val_loss[-1], 2)}.model"
 
-        if round(score * 100, 4) >= 77 and round(history.history["acc"][-1] * 100, 4) >= 77:
+        if round(val_acc[-1] * 100, 4) >= 77 and round(train_acc[-1] * 100, 4) >= 77:
             # saving & plotting only relevant models
             model.save(MODEL_NAME)
             print("saved: ", MODEL_NAME)
 
+            # Accuracy
             plt.plot(np.arange(len(val_acc)), val_acc)
-            plt.plot(np.arange(len(acc)), acc)
+            plt.plot(np.arange(len(train_acc)), train_acc)
             plt.title('Model Accuracy')
             plt.ylabel('accuracy')
+            plt.xlabel('epoch')
+            plt.legend(['val', 'train'], loc='upper left')
+            plt.show()
+
+            # Loss
+            plt.plot(np.arange(len(val_loss)), val_loss)
+            plt.plot(np.arange(len(train_loss)), train_loss)
+            plt.title('Model Loss')
+            plt.ylabel('Loss')
             plt.xlabel('epoch')
             plt.legend(['val', 'train'], loc='upper left')
             plt.show()
@@ -152,7 +163,7 @@ def check_other_classifiers(train_X, train_y, test_X, test_y):
 
 
 def main():
-    split_data(shuffle=True, division_factor=0, coupling=False)
+    split_data(shuffle=True, splitting_percentage=(70, 20, 10), division_factor=0, coupling=False)
 
     # loading personal_dataset
     tmp_train_X, train_y = load_data(starting_dir="training_data", shuffle=True, balance=True)
@@ -187,7 +198,6 @@ def main():
     #                timeKernelLen=50, dropOut=0.3, Ft=11, Fs=6)
 
     model = EEGNet(nb_classes=len(ACTIONS))
-    # model = cris_net((len(fft_train_X[0]), len(fft_train_X[0, 0]), 1))
     model.summary()
     model.compile(loss='categorical_crossentropy',
                   optimizer='nadam',
@@ -195,8 +205,8 @@ def main():
 
     keras.utils.plot_model(model, "pictures/net.png", show_shapes=True)
 
-    batch_size = 50
-    epochs = 70
+    batch_size = 32
+    epochs = 40
 
     # kfold_cross_val(model, train_X, train_y, epochs, num_folds=10, batch_size=batch_size)
     fit_and_save(model, epochs, train_X, train_y, validation_X, validation_y, batch_size)

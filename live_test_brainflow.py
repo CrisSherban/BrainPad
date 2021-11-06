@@ -1,15 +1,16 @@
 # This is intended for OpenBCI Cyton Board,
 # check: https://brainflow.readthedocs.io for other boards
 
+
+from dataset_tools import ACTIONS, preprocess_raw_eeg
+
 from brainflow import BoardShim, BrainFlowInputParams, BoardIds
 from matplotlib import pyplot as plt
 from timeit import default_timer as timer
-from dataset_tools import ACTIONS, preprocess_raw_eeg
-
+from tensorflow import keras
 import numpy as np
 import threading
 import argparse
-import keras
 import time
 import cv2
 import os
