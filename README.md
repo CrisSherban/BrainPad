@@ -11,8 +11,17 @@ Classification of EEG signals from the brain through OpenBCI hardware and Tensor
   <img src="pictures/short_demo.gif" width="400" /> 
 </p>
 
+## Table of Contents
 
-## Data Acquisition:
+* [Data Acquisition](#data-acquisition)
+* [Prerequisites](#prerequisites)
+* [Installation](#installation)
+* [Usage](#usage)
+* [Confusion Matrix](#confusion-matrix-so-far)
+* [A look at the samples](#a-look-at-our-samples)
+* [Best NN so far](#the-best-neural-network-so-far)
+
+## Data Acquisition
 The ```personal_dataset``` folder provides the current EEG samples taken following this protocol:<br>
 * The person sits in a comfortable position on a chair and follows the `acquire_eeg.py`
 protocol. 
@@ -108,11 +117,6 @@ pipenv install
 <img src="pictures/after_std.png">
 <img src="pictures/after_bandpass.png">
 <img src="pictures/ffts.png">
-</p>
-
-## How the crisnet model sees data:
-<p align='center'>
-<img src="pictures/how_model_sees.png">
 </p>
 
 ## The Best Neural Network so far:
