@@ -2,7 +2,7 @@
 
 ![](pictures/logo_large.png "Logo")
 
-Classification of EEG signals from the brain through OpenBCI hardware and Tensorflow-Keras API
+Classification of EEG signals from the brain through OpenBCI hardware and Tensorflow-Keras API.
 
 <p align='center'>
   <img src="pictures/helmet_orig.jpg" />
@@ -13,6 +13,7 @@ Classification of EEG signals from the brain through OpenBCI hardware and Tensor
 
 ## Table of Contents
 
+* [Disclaimer](#disclaimer)
 * [Data Acquisition](#data-acquisition)
 * [Prerequisites](#prerequisites)
 * [Installation](#installation)
@@ -20,6 +21,12 @@ Classification of EEG signals from the brain through OpenBCI hardware and Tensor
 * [Confusion Matrix](#confusion-matrix-so-far)
 * [A look at the samples](#a-look-at-our-samples)
 * [Best NN so far](#the-best-neural-network-so-far)
+
+## Disclaimer
+This is a boilerplate work-in-progress project for motor imagery classification with deep learning using OpenBCI Cyton board.  
+Feel free to take inspiration and use the code.  
+Don't forget to cite me and the articles that have had a huge impact on this project if you will use them.
+Please let me know if you find any improvements.
 
 ## Data Acquisition
 The ```personal_dataset``` folder provides the current EEG samples taken following this protocol:<br>
